@@ -1,0 +1,56 @@
+[
+  {
+    "id": "cafe-sua",
+    "name": "Cà phê sữa",
+    "category": "Cà phê",
+    "description": "Cà phê đậm vị pha cùng sữa đặc béo mịn.",
+    "price": 29000,
+    "image": "assets/images/ca-phe-sua.jpg",
+    "emoji": "☕"
+  },
+  {
+    "id": "bac-xiu",
+    "name": "Bạc xỉu",
+    "category": "Cà phê",
+    "description": "Nhiều sữa, thơm nhẹ cà phê, uống là mê.",
+    "price": 32000,
+    "image": "assets/images/ca-phe-sua.jpg",
+    "emoji": "🥛"
+  },
+  {
+    "id": "tra-dao",
+    "name": "Trà đào cam sả",
+    "category": "Trà trái cây",
+    "description": "Trà thanh mát, đào giòn, cam tươi và sả thơm.",
+    "price": 39000,
+    "image": "assets/images/tra-dao.jpg",
+    "emoji": "🍑"
+  },
+  {
+    "id": "tra-vai",
+    "name": "Trà vải hoa hồng",
+    "category": "Trà trái cây",
+    "description": "Vị vải ngọt dịu kết hợp hương hoa hồng tinh tế.",
+    "price": 42000,
+    "image": "assets/images/tra-dao.jpg",
+    "emoji": "🌹"
+  },
+  {
+    "id": "matcha-da-xay",
+    "name": "Matcha đá xay",
+    "category": "Đá xay",
+    "description": "Matcha xanh thơm, xay lạnh cùng kem sữa mịn.",
+    "price": 45000,
+    "image": "assets/images/logo.png",
+    "emoji": "🍵"
+  },
+  {
+    "id": "soda-chanh",
+    "name": "Soda chanh bạc hà",
+    "category": "Soda",
+    "description": "Sủi bọt mát lạnh, chanh tươi và bạc hà.",
+    "price": 35000,
+    "image": "assets/images/logo.png",
+    "emoji": "🍋"
+  }
+]
