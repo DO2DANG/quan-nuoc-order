@@ -1,6 +1,6 @@
 ## Website
 
-[Mộc Nhiên Coffee · Streamlit]
+[Đăng Coffee · Streamlit]
 https://quan-nuoc-order-rsckzv8cw4dnd4s6offztv.streamlit.app/
 
 ## 1. Tải dự án lần đầu và cài thư viện

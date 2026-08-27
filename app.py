@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).parent
 MENU_FILE = BASE_DIR / "data" / "menu.json"
 
 st.set_page_config(
-    page_title="Mộc Nhiên Coffee",
+    page_title="Đăng Coffee",
     page_icon="☕",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -76,7 +76,7 @@ categories = ["Tất cả"] + sorted({item["category"] for item in menu})
 
 st.markdown(
     '<section class="hero"><div class="eyebrow">Freshly brewed · Since 2024</div>'
-    '<h1>Mộc Nhiên Coffee</h1><p>Một khoảng nghỉ nhỏ, một ly nước vừa vặn với ngày hôm nay.</p></section>',
+    '<h1>Đăng Coffee</h1><p>Một khoảng nghỉ nhỏ, một ly nước vừa vặn với ngày hôm nay.</p></section>',
     unsafe_allow_html=True,
 )
 
