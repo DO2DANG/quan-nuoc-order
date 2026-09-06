@@ -76,7 +76,7 @@ categories = ["Tất cả"] + sorted({item["category"] for item in menu})
 
 st.markdown(
     '<section class="hero"><div class="eyebrow">Freshly brewed · Since 2024</div>'
-    '<h1>Đăng Coffee</h1><p>Một khoảng nghỉ nhỏ, một ly nước vừa vặn với ngày hôm nay.</p></section>',
+    '<h1>Nhóm 27 coffee</h1><p>Một khoảng nghỉ nhỏ, một ly nước vừa vặn với ngày hôm nay.</p></section>',
     unsafe_allow_html=True,
 )
 
