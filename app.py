@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).parent
 MENU_FILE = BASE_DIR / "data" / "menu.json"
 
 st.set_page_config(
-    page_title="Đăng Coffee",
+    page_title="Nhóm 27 coffee",
     page_icon="☕",
     layout="wide",
     initial_sidebar_state="collapsed",
