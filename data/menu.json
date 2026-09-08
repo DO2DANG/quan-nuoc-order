@@ -18,6 +18,14 @@
     "emoji": "🥛"
   },
   {
+    "id": "cappuccino",
+    "name": "Cappuccino",
+    "category": "Cà phê",
+    "description": "Nhiều sữa, thơm nhẹ cà phê, uống là mê.",
+    "price": 35000,
+    "image": "assets/images/cappuccino.png"
+  },
+  {
     "id": "tra-dao",
     "name": "Trà đào cam sả",
     "category": "Trà trái cây",
@@ -36,6 +44,15 @@
     "emoji": "🌹"
   },
   {
+    "id": "tra-chanh",
+    "name": "Trà chanh",
+    "category": "Trà trái cây",
+    "description": "Trà kết hợp nước chanh tươi, vị chua ngọt và giải khát.",
+    "price": 20000,
+    "image": "assets/images/tra-dao.jpg",
+    "emoji": "🍋"
+  },
+  {
     "id": "matcha-da-xay",
     "name": "Matcha đá xay",
     "category": "Đá xay",
@@ -45,6 +62,15 @@
     "emoji": "🍵"
   },
   {
+    "id": "dau-da-xay",
+    "name": "Dâu đá xay",
+    "category": "Đá xay",
+    "description": "Dâu xay cùng sữa và đá, vị chua ngọt, thơm mát.",
+    "price": 40000,
+    "image": "assets/images/logo.png",
+    "emoji": "🍓"
+  },
+  {
     "id": "soda-chanh",
     "name": "Soda chanh bạc hà",
     "category": "Soda",
@@ -52,5 +78,23 @@
     "price": 35000,
     "image": "assets/images/logo.png",
     "emoji": "🍋"
+  },
+  {
+    "id": "khoai-tay-chien",
+    "name": "Khoai tây chiên",
+    "category": "Đồ ăn nhẹ",
+    "description": "Khoai tây cắt que chiên giòn, bên ngoài vàng nhẹ, bên trong mềm.",
+    "price": 30000,
+    "image": "assets/images/logo.png",
+    "emoji": "🍟"
+  },
+  {
+    "id": "sandwich",
+    "name": "Sandwich",
+    "category": "Đồ ăn nhẹ",
+    "description": "Bánh mì sandwich kẹp thịt nguội, rau và sốt.",
+    "price": 35000,
+    "image": "assets/images/logo.png",
+    "emoji": "🥪"
   }
 ]
