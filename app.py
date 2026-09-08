@@ -114,7 +114,7 @@ with menu_column:
     for index, item in enumerate(filtered_menu):
         with product_columns[index % 2]:
             image_path = BASE_DIR / item["image"]
-            visual = f'<img src="{image_path.as_uri()}" style="width:100%;height:92px;object-fit:cover;border-radius:10px;">' if image_path.exists() and image_path.stat().st_size else item["emoji"]
+            visual = f'<img src="{image_path.as_uri()}" style="width:100%;height:92px;object-fit:cover;border-radius:10px;">' if image_path.exists() else ""
             st.markdown(
                 f'<div class="menu-card"><div class="drink-visual">{visual}</div>'
                 f'<div class="drink-name">{item["name"]}</div>'
