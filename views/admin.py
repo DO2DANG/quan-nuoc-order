@@ -1,9 +1,9 @@
 from datetime import date
+from datetime import datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
-
+from collections import Counter
 import streamlit as st
-
 import database
 
 
@@ -12,6 +12,154 @@ BASE_DIR = Path(__file__).parents[1]
 IMAGE_DIR = BASE_DIR / "assets" / "images"
 ALLOWED_IMAGE_TYPES = {"jpg", "jpeg", "png", "webp"}
 
+from datetime import datetime
+
+from datetime import datetime, timedelta
+
+def render_revenue_analytics():
+    st.subheader("📊 Thống kê và Xu hướng Kinh doanh")
+    
+    orders = database.list_orders()
+    
+    if not orders:
+        st.info("Chưa có dữ liệu đơn hàng để thống kê.")
+        return
+
+    view_mode = st.radio(
+        "Xem thống kê theo:", 
+        ["Khung giờ trong ngày", "Ngày trong tuần", "Theo tháng"], 
+        horizontal=True
+    )
+    
+    if view_mode == "Khung giờ trong ngày":
+        hours_count = {f"{h:02d}:00": 0 for h in range(8, 23)}
+        for order in orders:
+            created_at = order.get("created_at")
+            if created_at and isinstance(created_at, str):
+                try:
+                    dt_str = created_at.strip()
+                    if len(dt_str) >= 19:
+                        # Đọc thời gian gốc từ database và quy đổi sang giờ VN (+7 tiếng)
+                        dt_utc = datetime.strptime(dt_str[:19], "%Y-%m-%d %H:%M:%S")
+                        dt_vn = dt_utc + timedelta(hours=7)
+                        
+                        hour_str = f"{dt_vn.hour:02d}:00"
+                        if hour_str in hours_count:
+                            hours_count[hour_str] += 1
+                except Exception:
+                    pass
+        st.markdown("### Lượng đơn hàng theo khung giờ")
+        st.bar_chart(hours_count)
+        
+    elif view_mode == "Ngày trong tuần":
+        weekday_map = {
+            "Monday": "Thứ Hai", "Tuesday": "Thứ Ba", "Wednesday": "Thứ Tư", 
+            "Thursday": "Thứ Năm", "Friday": "Thứ Sáu", "Saturday": "Thứ Bảy", "Sunday": "Chủ Nhật"
+        }
+        weekday_order = ["Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"]
+        revenue_by_day = {day: 0.0 for day in weekday_order}
+        
+        for order in orders:
+            created_at = order.get("created_at")
+            raw_price = order.get("total_price", 0)
+            
+            try:
+                total_price = float(raw_price) if raw_price is not None else 0.0
+            except (ValueError, TypeError):
+                total_price = 0.0
+                
+            if created_at and isinstance(created_at, str):
+                try:
+                    dt_str = created_at.strip()
+                    if len(dt_str) >= 19:
+                        dt_utc = datetime.strptime(dt_str[:19], "%Y-%m-%d %H:%M:%S")
+                        dt_vn = dt_utc + timedelta(hours=7)
+                        
+                        en_day = dt_vn.strftime("%A")
+                        vn_day = weekday_map.get(en_day, en_day)
+                        if vn_day in revenue_by_day:
+                            revenue_by_day[vn_day] += total_price
+                except Exception:
+                    pass
+        st.markdown("### Doanh thu theo các ngày trong tuần (VNĐ)")
+        st.bar_chart(revenue_by_day)
+        
+    elif view_mode == "Theo tháng":
+        revenue_by_month = {}
+        for order in orders:
+            created_at = order.get("created_at")
+            raw_price = order.get("total_price", 0)
+            
+            try:
+                total_price = float(raw_price) if raw_price is not None else 0.0
+            except (ValueError, TypeError):
+                total_price = 0.0
+                
+            if created_at and isinstance(created_at, str):
+                try:
+                    dt_str = created_at.strip()
+                    if len(dt_str) >= 19:
+                        dt_utc = datetime.strptime(dt_str[:19], "%Y-%m-%d %H:%M:%S")
+                        dt_vn = dt_utc + timedelta(hours=7)
+                        
+                        m_str = dt_vn.strftime("Tháng %m/%Y")
+                        revenue_by_month[m_str] = revenue_by_month.get(m_str, 0.0) + total_price
+                except Exception:
+                    pass
+                    
+        st.markdown("### Doanh thu theo từng tháng (VNĐ)")
+        if revenue_by_month:
+            st.bar_chart(revenue_by_month)
+        else:
+            st.info("Chưa đủ dữ liệu thời gian hợp lệ để thống kê theo tháng.")
+def analyze_frequently_bought_together():
+    orders = database.list_orders()
+    pair_counter = Counter()
+    item_freq = Counter()
+    
+    for order in orders:
+        items = order["items"]
+        item_names = list(set(item["name"] for item in items))
+        
+        for name in item_names:
+            item_freq[name] += 1
+            
+        for i in range(len(item_names)):
+            for j in range(i + 1, len(item_names)):
+                pair = tuple(sorted([item_names[i], item_names[j]]))
+                pair_counter[pair] += 1
+                
+    suggestions = []
+    for (item_a, item_b), count in pair_counter.items():
+        freq_a = item_freq[item_a]
+        if freq_a > 0:
+            percentage = (count / freq_a) * 100
+            if percentage >= 20:
+                suggestions.append({
+                    "main": item_a,
+                    "combo": item_b,
+                    "percent": round(percentage)
+                })
+    return suggestions
+
+def render_combo_suggestions():
+    st.subheader("🛒 Gợi ý món thường mua cùng nhau (Phân tích dữ liệu)")
+    suggestions = analyze_frequently_bought_together()
+    
+    if suggestions:
+        st.success("Hệ thống đã phân tích được các cặp món khách hàng thường xuyên mua kèm:")
+        for item in suggestions:
+            st.markdown(
+                f"""
+                <div style="padding: 10px; background: #fff4ec; border-left: 4px solid #a75d3b; border-radius: 6px; margin-bottom: 8px;">
+                    🔥 <b>{item['percent']}%</b> khách mua <b>{item['main']}</b> thường mua thêm <b>{item['combo']}</b>.
+                    <br><span style="font-size: 0.85rem; color: #666;">💡 Gợi ý: Chủ quán có thể tạo combo ưu đãi cho 2 món này để kích thích mua sắm.</span>
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+    else:
+        st.info("Chưa đủ dữ liệu đơn hàng để phân tích. Hãy thêm một vài đơn hàng mẫu để hệ thống học dữ liệu nhé!")
 
 def format_price(price):
     return f"{price:,.0f}đ".replace(",", ".")
@@ -32,7 +180,7 @@ def save_uploaded_image(uploaded_image):
 
 def render():
     st.markdown("## Bảng điều hành quán")
-    menu_tab, orders_tab = st.tabs(["Quản lý menu", "Lịch sử đơn hàng"])
+    menu_tab, orders_tab, combo_tab , traffic_tab = st.tabs(["Quản lý menu", "Lịch sử đơn hàng", "Phân tích combo","Khung giờ cao điểm"])
     with menu_tab:
         st.markdown("### Thêm món mới")
         with st.form("add_menu_form"):
@@ -73,6 +221,9 @@ def render():
                     if delete:
                         database.delete_menu_item(item["id"])
                         st.rerun()
+    with combo_tab:
+        st.markdown("### Gợi ý món thường mua cùng nhau")
+        render_combo_suggestions()            
     with orders_tab:
         filter_col, phone_col = st.columns(2)
         with filter_col:
@@ -93,7 +244,8 @@ def render():
                 if status != order["status"] and st.button("Cập nhật trạng thái", key=f"update_{order['id']}"):
                     database.update_order_status(order["id"], status)
                     st.rerun()
-
+    with traffic_tab:
+       render_revenue_analytics()
 
 def is_authenticated():
     if st.session_state.get("admin_authenticated"):
