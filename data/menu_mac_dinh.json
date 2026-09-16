@@ -5,8 +5,7 @@
     "category": "Cà phê",
     "description": "Cà phê đậm vị pha cùng sữa đặc béo mịn.",
     "price": 29000,
-    "image": "assets/images/ca-phe-sua.jpg",
-    "emoji": "☕"
+    "image": "assets/images/ca_phe_sua.png"
   },
   {
     "id": "bac-xiu",
@@ -14,14 +13,13 @@
     "category": "Cà phê",
     "description": "Nhiều sữa, thơm nhẹ cà phê, uống là mê.",
     "price": 32000,
-    "image": "assets/images/ca-phe-sua.jpg",
-    "emoji": "🥛"
+    "image": "assets/images/bacxiu.png"
   },
   {
     "id": "cappuccino",
     "name": "Cappuccino",
     "category": "Cà phê",
-    "description": "Nhiều sữa, thơm nhẹ cà phê, uống là mê.",
+    "description": "Cà phê thơm đậm, sữa béo và bọt sữa mịn.",
     "price": 35000,
     "image": "assets/images/cappuccino.png"
   },
@@ -31,8 +29,7 @@
     "category": "Trà trái cây",
     "description": "Trà thanh mát, đào giòn, cam tươi và sả thơm.",
     "price": 39000,
-    "image": "assets/images/tra-dao.jpg",
-    "emoji": "🍑"
+    "image": "assets/images/tra_dao_cam_xa.png"
   },
   {
     "id": "tra-vai",
@@ -40,8 +37,7 @@
     "category": "Trà trái cây",
     "description": "Vị vải ngọt dịu kết hợp hương hoa hồng tinh tế.",
     "price": 42000,
-    "image": "assets/images/tra-dao.jpg",
-    "emoji": "🌹"
+    "image": "assets/images/tra_vai_hoa_hong.jpg"
   },
   {
     "id": "tra-chanh",
@@ -49,8 +45,7 @@
     "category": "Trà trái cây",
     "description": "Trà kết hợp nước chanh tươi, vị chua ngọt và giải khát.",
     "price": 20000,
-    "image": "assets/images/tra-dao.jpg",
-    "emoji": "🍋"
+    "image": "assets/images/trachanh.png"
   },
   {
     "id": "matcha-da-xay",
@@ -58,8 +53,7 @@
     "category": "Đá xay",
     "description": "Matcha xanh thơm, xay lạnh cùng kem sữa mịn.",
     "price": 45000,
-    "image": "assets/images/logo.png",
-    "emoji": "🍵"
+    "image": "assets/images/matcha_da_xay.jpg"
   },
   {
     "id": "dau-da-xay",
@@ -67,8 +61,7 @@
     "category": "Đá xay",
     "description": "Dâu xay cùng sữa và đá, vị chua ngọt, thơm mát.",
     "price": 40000,
-    "image": "assets/images/logo.png",
-    "emoji": "🍓"
+    "image": "assets/images/dau_da_xay.png"
   },
   {
     "id": "soda-chanh",
@@ -76,8 +69,7 @@
     "category": "Soda",
     "description": "Sủi bọt mát lạnh, chanh tươi và bạc hà.",
     "price": 35000,
-    "image": "assets/images/logo.png",
-    "emoji": "🍋"
+    "image": "assets/images/soda_chanh.png"
   },
   {
     "id": "khoai-tay-chien",
@@ -85,8 +77,7 @@
     "category": "Đồ ăn nhẹ",
     "description": "Khoai tây cắt que chiên giòn, bên ngoài vàng nhẹ, bên trong mềm.",
     "price": 30000,
-    "image": "assets/images/logo.png",
-    "emoji": "🍟"
+    "image": "assets/images/khoai_tay_chien.png"
   },
   {
     "id": "sandwich",
@@ -94,7 +85,6 @@
     "category": "Đồ ăn nhẹ",
     "description": "Bánh mì sandwich kẹp thịt nguội, rau và sốt.",
     "price": 35000,
-    "image": "assets/images/logo.png",
-    "emoji": "🥪"
+    "image": "assets/images/sandwich.png"
   }
 ]

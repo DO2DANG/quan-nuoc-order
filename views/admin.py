@@ -129,7 +129,8 @@ def analyze_frequently_bought_together():
                 pair = tuple(sorted([item_names[i], item_names[j]]))
                 pair_counter[pair] += 1
                 
-    suggestions = []
+        suggestions = []
+
     for (item_a, item_b), count in pair_counter.items():
         freq_a = item_freq[item_a]
         if freq_a > 0:
@@ -140,26 +141,73 @@ def analyze_frequently_bought_together():
                     "combo": item_b,
                     "percent": round(percentage)
                 })
+    suggestions.sort(key=lambda x: x["percent"], reverse=True)
     return suggestions
 
 def render_combo_suggestions():
-    st.subheader("🛒 Gợi ý món thường mua cùng nhau (Phân tích dữ liệu)")
+    st.subheader("🛒 Phân tích món thường mua cùng nhau")
+
     suggestions = analyze_frequently_bought_together()
-    
+
     if suggestions:
-        st.success("Hệ thống đã phân tích được các cặp món khách hàng thường xuyên mua kèm:")
         for item in suggestions:
-            st.markdown(
-                f"""
-                <div style="padding: 10px; background: #fff4ec; border-left: 4px solid #a75d3b; border-radius: 6px; margin-bottom: 8px;">
-                    🔥 <b>{item['percent']}%</b> khách mua <b>{item['main']}</b> thường mua thêm <b>{item['combo']}</b>.
-                    <br><span style="font-size: 0.85rem; color: #666;">💡 Gợi ý: Chủ quán có thể tạo combo ưu đãi cho 2 món này để kích thích mua sắm.</span>
-                </div>
-                """,
-                unsafe_allow_html=True
+            st.info(
+                f"🔥 {item['percent']}% khách mua "
+                f"{item['main']} thường mua thêm {item['combo']}"
             )
     else:
-        st.info("Chưa đủ dữ liệu đơn hàng để phân tích. Hãy thêm một vài đơn hàng mẫu để hệ thống học dữ liệu nhé!")
+        st.info("Chưa đủ dữ liệu để phân tích.")
+
+    st.divider()
+
+    st.subheader("🎁 Tạo combo theo ý chủ quán")
+
+    menu = database.list_menu()
+    names = [item["name"] for item in menu]
+
+    if len(names) >= 2:
+
+        name = st.text_input("Tên combo")
+
+        so_mon = st.number_input(
+            "Số món trong combo",
+            min_value=2,
+            max_value=len(names),
+            value=2,
+            step=1
+        )
+
+        with st.form("create_combo"):
+
+            mon_da_chon = []
+
+            for i in range(so_mon):
+                mon = st.selectbox(
+                    f"Món {i + 1}",
+                    names,
+                    key=f"combo_mon_{i}"
+                )
+                mon_da_chon.append(mon)
+
+            price = st.number_input(
+                "Giá combo (VNĐ)",
+                min_value=0,
+                step=1000
+            )
+
+            if st.form_submit_button("🎁 Tạo combo"):
+
+                if len(set(mon_da_chon)) < so_mon:
+                    st.error("Không được chọn trùng món.")
+
+                elif not name.strip() or price <= 0:
+                    st.error("Vui lòng nhập đủ thông tin.")
+
+                else:
+                    st.success(f"Đã tạo combo: {name}")
+
+    else:
+        st.warning("Cần có ít nhất 2 món trong menu.")
 
 def format_price(price):
     return f"{price:,.0f}đ".replace(",", ".")
@@ -180,13 +228,15 @@ def save_uploaded_image(uploaded_image):
 
 def render():
     st.markdown("## Bảng điều hành quán")
-    menu_tab, orders_tab, combo_tab , traffic_tab = st.tabs(["Quản lý menu", "Lịch sử đơn hàng", "Phân tích combo","Khung giờ cao điểm"])
+    menu_tab, orders_tab, combo_tab , traffic_tab, discount_tab, dashboard_tab = st.tabs(["Quản lý menu", "Lịch sử đơn hàng", "Phân tích combo","Khung giờ cao điểm","Mã giảm giá","Doanh thu"])
     with menu_tab:
         st.markdown("### Thêm món mới")
         with st.form("add_menu_form"):
             name = st.text_input("Tên món")
-            price = st.number_input("Giá", min_value=0.0, step=1000.0)
-            category = st.text_input("Danh mục")
+            price = st.number_input("Giá (VNĐ)", min_value=0, step=1000, value=0)
+            if price > 0:
+                st.caption(f"👉 Giá đã chọn: **{price:,.0f} đ**".replace(",", "."))
+            category = st.selectbox("Danh mục",options=["Cà phê", "Trà trái cây", "Soda", "Đá xay", "Đồ ăn nhẹ"],)
             uploaded_image = st.file_uploader("Chọn ảnh món từ máy", type=sorted(ALLOWED_IMAGE_TYPES))
             description = st.text_input("Mô tả")
             if st.form_submit_button("Thêm món", type="primary"):
@@ -246,6 +296,41 @@ def render():
                     st.rerun()
     with traffic_tab:
        render_revenue_analytics()
+    with discount_tab:
+        st.markdown("### Quản lý mã giảm giá")
+        with st.form("add_discount_form"):
+            col1, col2 = st.columns([2, 1])
+            with col1:
+                discount_code = st.text_input("Mã giảm giá (VD: GIAM20, FREESHIP...)").upper()
+            with col2:
+                discount_percent = st.number_input("Phần trăm giảm (%)", min_value=1, max_value=100, value=10, step=1)
+                
+            if st.form_submit_button("Tạo/Cập nhật mã", type="primary"):
+                if discount_code.strip():
+                    database.add_discount(discount_code, discount_percent)
+                    st.success(f"Đã lưu mã giảm giá: **{discount_code}** ({discount_percent}%)")
+                    st.rerun()
+                else:
+                    st.error("Vui lòng nhập mã giảm giá.")
+        with dashboard_tab:
+            render_revenue_dashboard()
+
+        st.markdown("---")
+        st.markdown("### Danh sách mã đang có")
+        discounts = database.list_discounts()
+        if discounts:
+            for d in discounts:
+                col_a, col_b, col_c = st.columns([2, 2, 1])
+                with col_a:
+                    st.text(f"Mã: {d['code']}")
+                with col_b:
+                    st.text(f"Giảm: {d['discount_percent']}%")
+                with col_c:
+                    if st.button("Xóa", key=f"del_disc_{d['code']}"):
+                        database.delete_discount(d['code'])
+                        st.rerun()
+        else:
+            st.info("Chưa có mã giảm giá nào.")   
 
 def is_authenticated():
     if st.session_state.get("admin_authenticated"):
@@ -257,3 +342,42 @@ def is_authenticated():
             st.rerun()
         st.sidebar.error("Mật khẩu không đúng.")
     return False
+def render_revenue_dashboard():
+  st.markdown("### 📊 Thống kê tổng quan")
+
+  # Lấy dữ liệu xử lý thuần Python
+  total_rev, total_ord, total_items, daily_stats = database.get_dashboard()
+
+  # 1. Hiển thị 3 chỉ số tổng quan ở đầu trang
+  col1, col2, col3 = st.columns(3)
+  with col1:
+    st.metric(label="💰 Tổng doanh thu", value=f"{total_rev:,.0f}đ".replace(",", "."))
+  with col2:
+    st.metric(label="📄 Tổng đơn hàng", value=f"{total_ord} đơn")
+  with col3:
+    st.metric(label="🥤 Tổng món đã bán", value=f"{total_items} món")
+
+  st.markdown("---")
+
+  # 2. Vẽ biểu đồ cột doanh thu qua st.bar_chart (truyền dạng dictionary trực tiếp)
+  st.markdown("### 📈 Biểu đồ doanh thu theo ngày")
+  if daily_stats:
+    # Gom lại thành dictionary {"Ngày": doanh_thu} để Streamlit vẽ biểu đồ
+    chart_data = {item["order_date"]: item["daily_revenue"] for item in daily_stats}
+    st.bar_chart(chart_data)
+  else:
+    st.info("Chưa có dữ liệu đơn hàng để hiển thị biểu đồ.")
+
+  st.markdown("---")
+
+  # 3. Hiển thị danh sách chi tiết theo từng ngày
+  st.markdown("### 📋 Bảng số liệu chi tiết từng ngày")
+  if daily_stats:
+    for row in daily_stats:
+      formatted_rev = f"{row['daily_revenue']:,.0f}đ".replace(",", ".")
+      st.info(
+          f"📅 **Ngày {row['order_date']}** | 📦 Số đơn: **{row['order_count']}**"
+          f" đơn | 💰 Doanh thu: **{formatted_rev}**"
+      )
+  else:
+    st.info("Chưa có dữ liệu đơn hàng.")

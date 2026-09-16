@@ -7,7 +7,6 @@ import database
 
 
 BASE_DIR = Path(__file__).parents[1]
-VALID_VOUCHERS = {"GIAM10K": 10000, "GIAM20K": 20000, "FREESHIP": 12000}
 
 
 def format_price(price):
@@ -52,16 +51,38 @@ def render():
             st.session_state.cart[item["id"]] = quantity
             subtotal += item["price"] * quantity
             order_items.append({"name": item["name"], "quantity": quantity, "price": item["price"]})
-        voucher = st.text_input("Mã giảm giá (nếu có)").strip().upper()
+        voucher = st.text_input("Mã giảm giá (nếu có)").strip()
         if st.button("Áp dụng mã"):
-            if voucher in VALID_VOUCHERS:
-                st.session_state.customer_discount = VALID_VOUCHERS[voucher]
-                st.success("Đã áp dụng mã giảm giá.")
+          if voucher:
+            # Gọi hàm lấy % giảm từ database do chủ quán tạo
+            discount_percent = database.get_discount_percent(voucher)
+            if discount_percent > 0:
+              st.session_state.customer_discount_percent = discount_percent
+              st.success(
+                  f"Đã áp dụng mã thành công! Giảm {discount_percent}%"
+              )
             else:
-                st.session_state.customer_discount = 0
-                st.error("Mã giảm giá không hợp lệ.")
-        total = max(0, subtotal - st.session_state.customer_discount)
+              st.session_state.customer_discount_percent = 0
+              st.error("Mã giảm giá không hợp lệ hoặc đã hết hạn.")
+          else:
+            st.session_state.customer_discount_percent = 0
+            st.warning("Vui lòng nhập mã giảm giá.")
+
+        # Lấy % giảm giá từ session (mặc định là 0 nếu chưa có)
+        current_discount_percent = st.session_state.get(
+            "customer_discount_percent", 0
+        )
+
+        # Tính tiền giảm theo phần trăm (%) thay vì trừ tiền cố định
+        discount_amount = subtotal * (current_discount_percent / 100)
+        total = max(0, subtotal - discount_amount)
+
         st.markdown(f"Tạm tính: **{format_price(subtotal)}**")
+        if current_discount_percent > 0:
+          st.markdown(
+              f"Giảm giá ({current_discount_percent}%):"
+              f" **-{format_price(discount_amount)}**"
+          )
         st.markdown(f"Tổng thanh toán: **{format_price(total)}**")
         with st.form("customer_order_form"):
             st.markdown("#### Xác nhận đơn hàng")
@@ -86,6 +107,6 @@ def render():
             if st.button("Đã hoàn thành thanh toán", type="primary", use_container_width=True):
                 order_id = database.save_order(pending_order["name"], pending_order["phone"], pending_order["table_num"], pending_order["items"], pending_order["total"])
                 st.session_state.cart = {}
-                st.session_state.customer_discount = 0
+                st.session_state.customer_discount_percent = ()
                 del st.session_state.pending_order
                 st.success(f"Đã nhận đơn #{order_id}. Trạng thái: Chờ pha chế.")
