@@ -64,6 +64,22 @@ quan-nuoc-order/
 
 Sau lần chạy đầu tiên, chương trình có thể tạo `orders.db` để lưu dữ liệu SQLite. Thư mục `.venv/` là môi trường Python riêng và không phải mã nguồn.
 
+### Lưu dữ liệu ổn định trên Streamlit Cloud
+
+SQLite chỉ phù hợp khi chạy local vì filesystem của Streamlit Cloud có thể bị tạo lại. Để tất cả phiên truy cập dùng chung dữ liệu và không mất đơn sau khi app restart:
+
+1. Tạo một project Supabase, mở SQL Editor và chạy toàn bộ file `supabase_schema.sql`.
+2. Trong Streamlit Cloud, vào **Settings > Secrets** và thêm:
+
+```toml
+SUPABASE_URL = "https://your-project.supabase.co"
+SUPABASE_KEY = "your-anon-key"
+```
+
+3. Redeploy app. Khi hai Secret này tồn tại, ứng dụng dùng Supabase cho menu, đơn hàng, trạng thái và mã giảm giá; khi chạy local không có Secret, ứng dụng tự dùng `orders.db`.
+
+Chính sách trong file SQL cho phép ứng dụng demo đọc/ghi bằng anon key. Với website thật, nên thêm đăng nhập và thu hẹp Row Level Security trước khi đưa vào sử dụng rộng rãi.
+
 ## Tác dụng của các file và thư mục
 
 - `app.py`: điểm khởi động ứng dụng, điều hướng giữa giao diện khách hàng và chủ quán.

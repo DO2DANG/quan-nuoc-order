@@ -116,20 +116,19 @@ def analyze_frequently_bought_together():
     orders = database.list_orders()
     pair_counter = Counter()
     item_freq = Counter()
-    
+    suggestions = []
+
     for order in orders:
-        items = order["items"]
-        item_names = list(set(item["name"] for item in items))
-        
+        items = order.get("items") or []
+        item_names = list({item.get("name") for item in items if item.get("name")})
+
         for name in item_names:
             item_freq[name] += 1
-            
+
         for i in range(len(item_names)):
             for j in range(i + 1, len(item_names)):
                 pair = tuple(sorted([item_names[i], item_names[j]]))
                 pair_counter[pair] += 1
-                
-        suggestions = []
 
     for (item_a, item_b), count in pair_counter.items():
         freq_a = item_freq[item_a]

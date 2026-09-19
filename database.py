@@ -1,13 +1,54 @@
 import json
+import os
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
+try:
+    import streamlit as st
+except ImportError:
+    st = None
+
+try:
+    from supabase import create_client
+except ImportError:
+    create_client = None
+
 
 BASE_DIR = Path(__file__).parent
 DB_PATH = BASE_DIR / "orders.db"
 MENU_FILE = BASE_DIR / "data" / "menu_mac_dinh.json"
+_supabase_client = None
+
+
+def _secret(name):
+    value = os.getenv(name, "").strip()
+    if value or st is None:
+        return value
+    try:
+        return str(st.secrets.get(name, "")).strip()
+    except (FileNotFoundError, KeyError, AttributeError):
+        return ""
+
+
+SUPABASE_URL = _secret("SUPABASE_URL")
+SUPABASE_KEY = _secret("SUPABASE_KEY")
+
+
+def _remote_client():
+    global _supabase_client
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        return None
+    if _supabase_client is None:
+        if create_client is None:
+            raise RuntimeError("Cài đặt supabase bằng requirements.txt trước khi dùng database từ xa.")
+        _supabase_client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    return _supabase_client
+
+
+def using_remote_database():
+    return _remote_client() is not None
 
 
 @contextmanager
@@ -23,6 +64,22 @@ def get_connection():
 
 
 def init_db():
+    if using_remote_database():
+        client = _remote_client()
+        if not client.table("menu").select("id").limit(1).execute().data and MENU_FILE.exists():
+            menu_items = json.loads(MENU_FILE.read_text(encoding="utf-8"))
+            client.table("menu").upsert([
+                {
+                    "id": item["id"],
+                    "name": item["name"],
+                    "price": item["price"],
+                    "category": item["category"],
+                    "image_url": item.get("image", ""),
+                    "description": item.get("description", ""),
+                }
+                for item in menu_items
+            ]).execute()
+        return
     with get_connection() as connection:
         connection.executescript(
             """
@@ -92,27 +149,51 @@ def init_db():
                 )
 
 def list_menu():
+    client = _remote_client()
+    if client:
+        return client.table("menu").select("*").order("category").order("name").execute().data
     with get_connection() as connection:
         return [dict(row) for row in connection.execute("SELECT * FROM menu ORDER BY category, name")]
 
 
 def add_menu_item(name, price, category, image_url, description=""):
     item_id = f"item-{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
+    client = _remote_client()
+    if client:
+        client.table("menu").insert({"id": item_id, "name": name.strip(), "price": price, "category": category.strip(), "image_url": image_url.strip(), "description": description.strip()}).execute()
+        return
     with get_connection() as connection:
         connection.execute("INSERT INTO menu (id, name, price, category, image_url, description) VALUES (?, ?, ?, ?, ?, ?)", (item_id, name.strip(), price, category.strip(), image_url.strip(), description.strip()))
 
 
 def update_menu_item(item_id, name, price, category, image_url, description=""):
+    client = _remote_client()
+    if client:
+        client.table("menu").update({"name": name.strip(), "price": price, "category": category.strip(), "image_url": image_url.strip(), "description": description.strip()}).eq("id", item_id).execute()
+        return
     with get_connection() as connection:
         connection.execute("UPDATE menu SET name = ?, price = ?, category = ?, image_url = ?, description = ? WHERE id = ?", (name.strip(), price, category.strip(), image_url.strip(), description.strip(), item_id))
 
 
 def delete_menu_item(item_id):
+    client = _remote_client()
+    if client:
+        client.table("menu").delete().eq("id", item_id).execute()
+        return
     with get_connection() as connection:
         connection.execute("DELETE FROM menu WHERE id = ?", (item_id,))
 
 
 def save_order(name, phone, table_num, items, total_price):
+    client = _remote_client()
+    if client:
+        customer_response = client.table("customers").select("id").eq("name", name.strip()).eq("phone", phone.strip()).eq("table_num", table_num.strip()).limit(1).execute()
+        if customer_response.data:
+            customer_id = customer_response.data[0]["id"]
+        else:
+            customer_response = client.table("customers").insert({"name": name.strip(), "phone": phone.strip(), "table_num": table_num.strip()}).execute()
+            customer_id = customer_response.data[0]["id"]
+        return client.table("orders").insert({"customer_id": customer_id, "items": items, "total_price": total_price}).execute().data[0]["id"]
     with get_connection() as connection:
         customer = connection.execute("SELECT id FROM customers WHERE name = ? AND phone = ? AND table_num = ?", (name.strip(), phone.strip(), table_num.strip())).fetchone()
         if customer is None:
@@ -123,6 +204,18 @@ def save_order(name, phone, table_num, items, total_price):
 
 
 def list_orders(date_value="", phone=""):
+    client = _remote_client()
+    if client:
+        query = client.table("orders").select("*, customers(name, phone, table_num)").order("created_at", desc=True)
+        if date_value:
+            query = query.gte("created_at", f"{date_value}T00:00:00").lt("created_at", f"{date_value}T23:59:59.999999")
+        rows = []
+        for order in query.execute().data:
+            customer = order.pop("customers", {}) or {}
+            order.update({"customer_name": customer.get("name", ""), "phone": customer.get("phone", ""), "table_num": customer.get("table_num", "")})
+            if not phone.strip() or phone.strip() in order["phone"]:
+                rows.append(order)
+        return rows
     query = "SELECT orders.*, customers.name AS customer_name, customers.phone, customers.table_num FROM orders JOIN customers ON customers.id = orders.customer_id WHERE 1 = 1"
     params = []
     if date_value:
@@ -140,13 +233,24 @@ def list_orders(date_value="", phone=""):
 
 
 def update_order_status(order_id, status):
+    client = _remote_client()
+    if client:
+        client.table("orders").update({"status": status}).eq("id", order_id).execute()
+        return
     with get_connection() as connection:
         connection.execute("UPDATE orders SET status = ? WHERE id = ?", (status, order_id))
 def list_discounts():
+    client = _remote_client()
+    if client:
+        return client.table("discounts").select("*").order("created_at", desc=True).execute().data
     with get_connection() as connection:
         return [dict(row) for row in connection.execute("SELECT * FROM discounts ORDER BY created_at DESC")]
 
 def add_discount(code, percent):
+    client = _remote_client()
+    if client:
+        client.table("discounts").upsert({"code": code.strip().upper(), "discount_percent": percent, "active": True}).execute()
+        return
     with get_connection() as connection:
         connection.execute(
             "INSERT OR REPLACE INTO discounts (code, discount_percent, active) VALUES (?, ?, 1)",
@@ -154,10 +258,18 @@ def add_discount(code, percent):
         )
 
 def delete_discount(code):
+    client = _remote_client()
+    if client:
+        client.table("discounts").delete().eq("code", code).execute()
+        return
     with get_connection() as connection:
         connection.execute("DELETE FROM discounts WHERE code = ?", (code,))
 
 def get_discount_percent(code):
+    client = _remote_client()
+    if client:
+        response = client.table("discounts").select("discount_percent").eq("code", code.strip().upper()).eq("active", True).limit(1).execute()
+        return response.data[0]["discount_percent"] if response.data else 0
     with get_connection() as connection:
         row = connection.execute(
             "SELECT discount_percent FROM discounts WHERE code = ? AND active = 1",
