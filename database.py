@@ -312,10 +312,41 @@ def get_dashboard():
 
   return total_revenue, total_orders, total_items_sold, daily_stats
 def get_order_by_id(order_id):
+    client = _remote_client()
+
+    # Nếu đang sử dụng Supabase
+    if client:
+        response = (
+            client.table("orders")
+            .select("*, customers(name, phone, table_num)")
+            .eq("id", order_id)
+            .limit(1)
+            .execute()
+        )
+
+        if not response.data:
+            return None
+
+        order = response.data[0]
+
+        # Lấy thông tin khách hàng
+        customer = order.pop("customers", {}) or {}
+
+        order["name"] = customer.get("name", "")
+        order["phone"] = customer.get("phone", "")
+        order["table_num"] = customer.get("table_num", "")
+
+        # Xử lý items
+        if isinstance(order["items"], str):
+            order["items"] = json.loads(order["items"])
+
+        return order
+
+    # Nếu đang sử dụng SQLite
     with get_connection() as conn:
         row = conn.execute(
             """
-            SELECT 
+            SELECT
                 orders.id,
                 customers.name,
                 customers.phone,
@@ -325,7 +356,7 @@ def get_order_by_id(order_id):
                 orders.status,
                 orders.created_at
             FROM orders
-            JOIN customers 
+            JOIN customers
                 ON orders.customer_id = customers.id
             WHERE orders.id = ?
             """,
@@ -336,6 +367,8 @@ def get_order_by_id(order_id):
             return None
 
         order = dict(row)
-        order["items"] = json.loads(order["items"])
+
+        if isinstance(order["items"], str):
+            order["items"] = json.loads(order["items"])
 
         return order
