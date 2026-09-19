@@ -311,3 +311,31 @@ def get_dashboard():
     })
 
   return total_revenue, total_orders, total_items_sold, daily_stats
+def get_order_by_id(order_id):
+    with get_connection() as conn:
+        row = conn.execute(
+            """
+            SELECT 
+                orders.id,
+                customers.name,
+                customers.phone,
+                customers.table_num,
+                orders.items,
+                orders.total_price,
+                orders.status,
+                orders.created_at
+            FROM orders
+            JOIN customers 
+                ON orders.customer_id = customers.id
+            WHERE orders.id = ?
+            """,
+            (order_id,)
+        ).fetchone()
+
+        if row is None:
+            return None
+
+        order = dict(row)
+        order["items"] = json.loads(order["items"])
+
+        return order
