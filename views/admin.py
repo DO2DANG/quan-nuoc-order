@@ -12,9 +12,14 @@ BASE_DIR = Path(__file__).parents[1]
 IMAGE_DIR = BASE_DIR / "assets" / "images"
 ALLOWED_IMAGE_TYPES = {"jpg", "jpeg", "png", "webp"}
 
-from datetime import datetime
+def format_time_vn(value):
+    try:
+        dt = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+        dt = dt.replace(tzinfo=None) + timedelta(hours=7)
+        return dt.strftime("%d/%m/%Y - %H:%M")
+    except:
+        return str(value)
 
-from datetime import datetime, timedelta
 
 def render_revenue_analytics():
     st.subheader("📊 Thống kê và Xu hướng Kinh doanh")
