@@ -13,53 +13,87 @@ def format_price(price):
     return f"{price:,.0f}đ".replace(",", ".")
 
 
+
+def show_invoice(order):
+    """Hiển thị hóa đơn trong hộp thoại ở giữa màn hình, kèm mã VietQR."""
+    @st.dialog("🧾 HÓA ĐƠN THANH TOÁN")
+    def invoice_dialog():
+        st.success("✅ Đặt hàng thành công!")
+
+        st.markdown(
+            """
+            <div style="text-align: center;">
+                <h3>NHÓM 27 COFFEE</h3>
+                <p>Cảm ơn quý khách đã sử dụng dịch vụ!</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        st.write(f"**Mã hóa đơn:** #{order['id']}")
+        st.write(f"**Tên khách hàng:** {order['name']}")
+        st.write(f"**Số điện thoại:** {order['phone']}")
+        st.write(f"**Số bàn:** {order['table_num']}")
+        st.write(f"**Thời gian:** {order['created_at']}")
+        st.write(f"**Trạng thái:** {order['status']}")
+
+        st.divider()
+        st.markdown("### Chi tiết món hàng")
+
+        for item in order["items"]:
+            amount = item["quantity"] * item["price"]
+            st.write(
+                f"**{item['name']}** × {item['quantity']} "
+                f"— {format_price(amount)}"
+            )
+
+        st.divider()
+        st.markdown(
+            f"## Tổng tiền: {format_price(order['total_price'])}"
+        )
+
+        # Thay bằng thông tin tài khoản ngân hàng thật của quán
+        bank_code = "VCB"
+        account_number = "0123456789"
+
+        qr_url = (
+            f"https://img.vietqr.io/image/"
+            f"{quote(bank_code)}-{quote(account_number)}-compact2.png?"
+            f"amount={int(order['total_price'])}"
+            f"&addInfo={quote('Thanh toan don ' + str(order['id']))}"
+        )
+
+        st.markdown("### 📱 Quét mã VietQR để thanh toán")
+        st.image(
+            qr_url,
+            caption="Quét mã để thanh toán",
+            width=260
+        )
+
+        st.caption(
+            "Vui lòng kiểm tra đúng số tiền trước khi chuyển khoản."
+        )
+
+        if st.button("Đóng hóa đơn", use_container_width=True):
+            st.session_state.show_invoice = False
+            st.session_state.pop("last_order_id", None)
+            st.rerun()
+
+    invoice_dialog()
+
+
 def render():
     menu = database.list_menu()
 
     # ==============================
-    # HIỂN THỊ HÓA ĐƠN SAU KHI ĐẶT HÀNG
+    # HIỂN THỊ HÓA ĐƠN TRONG HỘP THOẠI
     # ==============================
-    if "last_order_id" in st.session_state:
-        order_id = st.session_state.last_order_id
-        order = database.get_order_by_id(order_id)
-
-        if order:
-            st.divider()
-            st.subheader(f"🧾 Hóa đơn đơn hàng #{order['id']}")
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.write(f"**Tên khách hàng:** {order['name']}")
-                st.write(f"**Số điện thoại:** {order['phone']}")
-                st.write(f"**Số bàn:** {order['table_num']}")
-
-            with col2:
-                st.write(f"**Thời gian:** {order['created_at']}")
-                st.write(f"**Trạng thái:** {order['status']}")
-
-            st.markdown("### Chi tiết món hàng")
-
-            for item in order["items"]:
-                name = item["name"]
-                quantity = item["quantity"]
-                price = item["price"]
-                amount = quantity * price
-
-                st.write(
-                    f"- **{name}** × {quantity}: "
-                    f"{format_price(amount)}"
-                )
-
-            st.divider()
-
-            st.markdown(
-                f"## Tổng tiền: {format_price(order['total_price'])}"
-            )
-
-            if st.button("Ẩn hóa đơn"):
-                del st.session_state.last_order_id
-                st.rerun()
+    if st.session_state.get("show_invoice", False):
+        order_id = st.session_state.get("last_order_id")
+        if order_id is not None:
+            order = database.get_order_by_id(order_id)
+            if order:
+                show_invoice(order)
 
     # ==============================
     # GIAO DIỆN ĐẶT NƯỚC
@@ -293,54 +327,30 @@ def render():
                     st.rerun()
 
             # ==============================
-            # THANH TOÁN VIETQR
+            # XÁC NHẬN THANH TOÁN
             # ==============================
-            pending_order = st.session_state.get(
-                "pending_order"
-            )
+            pending_order = st.session_state.get("pending_order")
 
             if pending_order:
                 st.divider()
 
-                st.markdown("#### Thanh toán VietQR")
+                st.markdown("#### Xác nhận thanh toán")
 
                 st.write(
                     f"Đơn của **{pending_order['name']}** - "
                     f"{format_price(pending_order['total'])}"
                 )
 
-                bank_code = st.text_input(
-                    "Mã ngân hàng nhận tiền",
-                    value="VCB",
-                    key="bank_code"
+                st.info(
+                    "Sau khi chuyển khoản, hãy bấm nút bên dưới để "
+                    "lưu đơn hàng và xem hóa đơn kèm mã VietQR."
                 )
 
-                account_number = st.text_input(
-                    "Số tài khoản nhận tiền",
-                    value="0123456789",
-                    key="account_number"
-                )
-
-                qr_url = (
-                    f"https://img.vietqr.io/image/"
-                    f"{quote(bank_code)}-"
-                    f"{quote(account_number)}-"
-                    f"compact2.png?"
-                    f"amount={int(pending_order['total'])}"
-                    f"&addInfo={quote('Thanh toan don ' + pending_order['name'])}"
-                )
-
-                st.image(
-                    qr_url,
-                    caption="Quét mã để thanh toán",
-                    width=260
-                )
-
-                # ==============================
-                # XÁC NHẬN ĐÃ THANH TOÁN
-                # ==============================
-                if st.button("Đã hoàn thành thanh toán"):
-
+                if st.button(
+                    "Đã hoàn thành thanh toán",
+                    type="primary",
+                    use_container_width=True
+                ):
                     order_id = database.save_order(
                         pending_order["name"],
                         pending_order["phone"],
@@ -349,20 +359,12 @@ def render():
                         pending_order["total"]
                     )
 
-                    # Lưu mã đơn hàng để hiển thị hóa đơn
                     st.session_state.last_order_id = order_id
+                    st.session_state.show_invoice = True
 
-                    # Xóa giỏ hàng
                     st.session_state.cart = {}
-
-                    # Xóa mã giảm giá
                     st.session_state.customer_discount_percent = 0
-
-                    # Xóa đơn hàng đang chờ thanh toán
-                    del st.session_state.pending_order
-
-                    st.success(
-                        f"Đã nhận đơn hàng #{order_id}"
-                    )
+                    st.session_state.pop("pending_order", None)
 
                     st.rerun()
+
