@@ -107,7 +107,13 @@ def init_db():
                 table_num TEXT NOT NULL,
                 UNIQUE(name, phone, table_num)
             );
-
+            CREATE TABLE IF NOT EXISTS combos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                items TEXT NOT NULL,
+                price REAL NOT NULL CHECK(price >= 0),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
             CREATE TABLE IF NOT EXISTS orders (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 customer_id INTEGER NOT NULL,
@@ -372,3 +378,39 @@ def get_order_by_id(order_id):
             order["items"] = json.loads(order["items"])
 
         return order
+def add_combo(name, items, price):
+    client = _remote_client()
+    if client:
+        client.table("combos").insert({
+            "name": name.strip(),
+            "items": json.dumps(items, ensure_ascii=False),
+            "price": price
+        }).execute()
+        return
+    with get_connection() as connection:
+        connection.execute(
+            "INSERT INTO combos (name, items, price) VALUES (?, ?, ?)",
+            (name.strip(), json.dumps(items, ensure_ascii=False), price)
+        )
+
+def list_combos():
+    client = _remote_client()
+    if client:
+        data = client.table("combos").select("*").order("created_at", desc=True).execute().data
+        for row in data:
+            if isinstance(row["items"], str):
+                row["items"] = json.loads(row["items"])
+        return data
+    with get_connection() as connection:
+        rows = [dict(row) for row in connection.execute("SELECT * FROM combos ORDER BY created_at DESC")]
+        for row in rows:
+            row["items"] = json.loads(row["items"])
+        return rows
+
+def delete_combo(combo_id):
+    client = _remote_client()
+    if client:
+        client.table("combos").delete().eq("id", combo_id).execute()
+        return
+    with get_connection() as connection:
+        connection.execute("DELETE FROM combos WHERE id = ?", (combo_id,))

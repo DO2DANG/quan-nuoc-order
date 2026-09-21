@@ -37,20 +37,19 @@ def render_revenue_analytics():
     )
     
     if view_mode == "Khung giờ trong ngày":
-        hours_count = {f"{h:02d}:00": 0 for h in range(8, 23)}
+        # Khởi tạo đủ 24 khung giờ từ 00:00 đến 23:00 hoặc từ 08:00 đến 22:00
+        hours_count = {f"{h:02d}:00": 0 for h in range(24)}
         for order in orders:
             created_at = order.get("created_at")
-            if created_at and isinstance(created_at, str):
+            if created_at:
                 try:
-                    dt_str = created_at.strip()
-                    if len(dt_str) >= 19:
-                        # Đọc thời gian gốc từ database và quy đổi sang giờ VN (+7 tiếng)
-                        dt_utc = datetime.strptime(dt_str[:19], "%Y-%m-%d %H:%M:%S")
-                        dt_vn = dt_utc + timedelta(hours=7)
-                        
-                        hour_str = f"{dt_vn.hour:02d}:00"
-                        if hour_str in hours_count:
-                            hours_count[hour_str] += 1
+                    # Chuyển đổi an toàn mọi định dạng thời gian ISO hoặc chuẩn SQL
+                    dt = datetime.fromisoformat(str(created_at).replace("Z", "+00:00"))
+                    dt_vn = dt.replace(tzinfo=None) + timedelta(hours=7)
+                    
+                    hour_str = f"{dt_vn.hour:02d}:00"
+                    if hour_str in hours_count:
+                        hours_count[hour_str] += 1
                 except Exception:
                     pass
         st.markdown("### Lượng đơn hàng theo khung giờ")
@@ -67,23 +66,20 @@ def render_revenue_analytics():
         for order in orders:
             created_at = order.get("created_at")
             raw_price = order.get("total_price", 0)
-            
             try:
                 total_price = float(raw_price) if raw_price is not None else 0.0
             except (ValueError, TypeError):
                 total_price = 0.0
                 
-            if created_at and isinstance(created_at, str):
+            if created_at:
                 try:
-                    dt_str = created_at.strip()
-                    if len(dt_str) >= 19:
-                        dt_utc = datetime.strptime(dt_str[:19], "%Y-%m-%d %H:%M:%S")
-                        dt_vn = dt_utc + timedelta(hours=7)
-                        
-                        en_day = dt_vn.strftime("%A")
-                        vn_day = weekday_map.get(en_day, en_day)
-                        if vn_day in revenue_by_day:
-                            revenue_by_day[vn_day] += total_price
+                    dt = datetime.fromisoformat(str(created_at).replace("Z", "+00:00"))
+                    dt_vn = dt.replace(tzinfo=None) + timedelta(hours=7)
+                    
+                    en_day = dt_vn.strftime("%A")
+                    vn_day = weekday_map.get(en_day, en_day)
+                    if vn_day in revenue_by_day:
+                        revenue_by_day[vn_day] += total_price
                 except Exception:
                     pass
         st.markdown("### Doanh thu theo các ngày trong tuần (VNĐ)")
@@ -94,21 +90,18 @@ def render_revenue_analytics():
         for order in orders:
             created_at = order.get("created_at")
             raw_price = order.get("total_price", 0)
-            
             try:
                 total_price = float(raw_price) if raw_price is not None else 0.0
             except (ValueError, TypeError):
                 total_price = 0.0
                 
-            if created_at and isinstance(created_at, str):
+            if created_at:
                 try:
-                    dt_str = created_at.strip()
-                    if len(dt_str) >= 19:
-                        dt_utc = datetime.strptime(dt_str[:19], "%Y-%m-%d %H:%M:%S")
-                        dt_vn = dt_utc + timedelta(hours=7)
-                        
-                        m_str = dt_vn.strftime("Tháng %m/%Y")
-                        revenue_by_month[m_str] = revenue_by_month.get(m_str, 0.0) + total_price
+                    dt = datetime.fromisoformat(str(created_at).replace("Z", "+00:00"))
+                    dt_vn = dt.replace(tzinfo=None) + timedelta(hours=7)
+                    
+                    m_str = dt_vn.strftime("Tháng %m/%Y")
+                    revenue_by_month[m_str] = revenue_by_month.get(m_str, 0.0) + total_price
                 except Exception:
                     pass
                     
@@ -164,13 +157,12 @@ def render_combo_suggestions():
 
     st.divider()
 
-    st.subheader("🎁 Tạo combo theo ý chủ quán")
+    st.subheader("🎁 Tạo combo")
 
     menu = database.list_menu()
     names = [item["name"] for item in menu]
 
     if len(names) >= 2:
-
         name = st.text_input("Tên combo")
 
         so_mon = st.number_input(
@@ -181,38 +173,77 @@ def render_combo_suggestions():
             step=1
         )
 
-        with st.form("create_combo"):
+        mon_da_chon = []
+        tong_gia_goc = 0.0
 
-            mon_da_chon = []
+        menu_dict = {item["name"]: item["price"] for item in menu}
 
-            for i in range(so_mon):
-                mon = st.selectbox(
-                    f"Món {i + 1}",
-                    names,
-                    key=f"combo_mon_{i}"
-                )
-                mon_da_chon.append(mon)
-
-            price = st.number_input(
-                "Giá combo (VNĐ)",
-                min_value=0,
-                step=1000
+        for i in range(so_mon):
+            mon = st.selectbox(
+                f"Món {i + 1}",
+                names,
+                key=f"combo_mon_{i}"
             )
 
-            if st.form_submit_button("🎁 Tạo combo"):
+            mon_da_chon.append(mon)
+            tong_gia_goc += menu_dict.get(mon, 0)
 
-                if len(set(mon_da_chon)) < so_mon:
-                    st.error("Không được chọn trùng món.")
+        st.info(
+            f"💡 **Tổng giá gốc các món lẻ:** "
+            f"{format_price(tong_gia_goc)}"
+        )
 
-                elif not name.strip() or price <= 0:
-                    st.error("Vui lòng nhập đủ thông tin.")
+        if "last_tong_gia_goc" not in st.session_state:
+            st.session_state.last_tong_gia_goc = tong_gia_goc
 
-                else:
-                    st.success(f"Đã tạo combo: {name}")
+        if st.session_state.last_tong_gia_goc != tong_gia_goc:
+            st.session_state.combo_price_val = int(tong_gia_goc)
+            st.session_state.last_tong_gia_goc = tong_gia_goc
+
+        if "combo_price_val" not in st.session_state:
+            st.session_state.combo_price_val = int(tong_gia_goc)
+
+        price = st.number_input(
+            "Giá combo (VNĐ)",
+            min_value=0,
+            step=1000,
+            key="combo_price_val"
+        )
+
+        if st.button("🎁 Tạo combo", type="primary"):
+            if len(set(mon_da_chon)) < so_mon:
+                st.error("Không được chọn trùng món.")
+            elif not name.strip() or price <= 0:
+                st.error("Vui lòng nhập đủ thông tin.")
+            else:
+                database.add_combo(name, mon_da_chon, price)
+                st.success(f"Đã tạo combo: {name}")
+                st.rerun()
+
+        st.markdown("---")
+        st.markdown("### 🗑️ Xóa combo")
+
+        combos = database.list_combos()
+
+        if combos:
+            for c in combos:
+                col_name, col_price, col_del = st.columns([3, 2, 1])
+
+                with col_name:
+                    st.write(f"**{c['name']}**")
+
+                with col_price:
+                    st.write(format_price(c['price']))
+
+                with col_del:
+                    if st.button("Xóa", key=f"del_c_{c['id']}"):
+                        database.delete_combo(c['id'])
+                        st.rerun()
+        else:
+            st.caption("Chưa có combo nào được lưu.")
 
     else:
         st.warning("Cần có ít nhất 2 món trong menu.")
-
 def format_price(price):
     return f"{price:,.0f}đ".replace(",", ".")
 
@@ -291,7 +322,8 @@ def render():
         for order in orders:
             with st.container(border=True):
                 st.markdown(f"**Đơn #{order['id']}** · {order['customer_name']} · Bàn {order['table_num']}")
-                st.caption(f"{order['created_at']} · {order['phone']} · Tổng {format_price(order['total_price'])}")
+                thoi_gian_dep = format_time_vn(order['created_at'])
+                st.caption(f"{thoi_gian_dep} · {order['phone']} · Tổng {format_price(order['total_price'])}")
                 st.write(", ".join(f"{item['name']} x{item['quantity']}" for item in order["items"]))
                 statuses = ["Chờ pha chế", "Đã xong", "Đã hủy"]
                 status = st.selectbox("Trạng thái", statuses, index=statuses.index(order["status"]), key=f"status_{order['id']}")

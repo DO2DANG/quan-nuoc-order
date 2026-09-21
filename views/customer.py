@@ -149,7 +149,24 @@ def render():
     # ==============================
     st.markdown("## Đặt nước tại Nhóm 27 coffee")
     st.caption("Chọn món, xác nhận thông tin và thanh toán bằng VietQR.")
-
+    combos = database.list_combos()
+    if combos:
+        st.markdown("### 🔥 Combo Ưu Đãi Đặc Biệt")
+        combo_cols = st.columns(min(len(combos), 2))
+        for idx, combo in enumerate(combos):
+            with combo_cols[idx % len(combo_cols)]:
+                with st.container(border=True):
+                    st.markdown(f"**🎁 {combo['name']}**")
+                    items_str = " + ".join(combo['items'])
+                    st.caption(f"Bao gồm: {items_str}")
+                    st.markdown(f"**Giá:** {format_price(combo['price'])}")
+                    
+                    if st.button(f"Chọn combo này", key=f"add_combo_{combo['id']}", use_container_width=True):
+                        # Thêm combo vào giỏ hàng dưới dạng một sản phẩm gộp
+                        combo_key = f"combo_{combo['id']}"
+                        st.session_state.cart[combo_key] = st.session_state.cart.get(combo_key, 0) + 1
+                        st.toast(f"Đã thêm combo {combo['name']} vào giỏ hàng!")
+        st.divider()
     # Khởi tạo giỏ hàng
     if "cart" not in st.session_state:
         st.session_state.cart = {}
@@ -230,12 +247,23 @@ def render():
     with cart_column:
         st.markdown("### Giỏ hàng")
 
+        combos_list = database.list_combos()
+        combos_as_items = [
+            {
+                "id": f"combo_{c['id']}",
+                "name": f"🎁 Combo: {c['name']} ({' + '.join(c['items'])})",
+                "price": c['price'],
+                "category": "Combo"
+            }
+            for c in combos_list
+        ]
+        all_products = menu + combos_as_items
+
         selected_items = [
             item
-            for item in menu
+            for item in all_products
             if st.session_state.cart.get(item["id"], 0) > 0
         ]
-
         if not selected_items:
             st.info("Giỏ hàng đang trống.")
 

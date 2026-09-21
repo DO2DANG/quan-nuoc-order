@@ -1,6 +1,5 @@
 import streamlit as st
 import textwrap
-
 import database
 from views import admin, customer
 
