@@ -82,7 +82,56 @@ def show_invoice(order):
     invoice_dialog()
 
 
+def show_welcome_screen():
+    """Màn hình chào mừng trước khi khách bắt đầu đặt món."""
+    st.markdown(
+        """
+        <style>
+        .welcome-box {
+            text-align: center;
+            padding: 70px 25px;
+            border-radius: 22px;
+            background: linear-gradient(135deg, #fff8ed, #f7e3c5);
+            margin: 35px auto;
+            max-width: 850px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+        }
+        .welcome-title {
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        .welcome-subtitle {
+            font-size: 20px;
+            margin-bottom: 30px;
+        }
+        </style>
+        <div class="welcome-box">
+            <div class="welcome-title">☕ KÍNH CHÀO QUÝ KHÁCH</div>
+            <div class="welcome-subtitle">
+                Chào mừng bạn đến với <b>Nhóm 27 Coffee</b><br>
+                Hãy chọn món yêu thích và tận hưởng thức uống của bạn!
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+    left, center, right = st.columns([1, 2, 1])
+    with center:
+        if st.button("🛒 ĐẶT MÓN NGAY", type="primary", use_container_width=True):
+            st.session_state.started_ordering = True
+            st.rerun()
+
+
 def render():
+    if "started_ordering" not in st.session_state:
+        st.session_state.started_ordering = False
+
+    if not st.session_state.started_ordering:
+        show_welcome_screen()
+        return
+
     menu = database.list_menu()
 
     # ==============================
