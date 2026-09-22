@@ -6,7 +6,6 @@ from views import admin, customer
 
 database.init_db()
 
-
 st.set_page_config(
     page_title="Nhóm 27 coffee",
     page_icon="☕",
