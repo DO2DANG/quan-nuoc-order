@@ -46,16 +46,20 @@ st.markdown(
             margin-bottom: 25px;
         }
 
-        div[data-testid="stPopover"] > button {
+        button[data-testid="stPopoverButton"],
+        div.st-key-customer-nav button {
             width: 100%;
-            min-height: 65px;
+            height: 40px;
+            min-height: 40px;
+            padding: 0.5rem 1rem;
             border: 1px solid #6f4030 !important;
             border-radius: 10px;
             background: linear-gradient(110deg, #30231e, #a75d3b) !important;
             color: #fffaf5 !important;
         }
 
-        div[data-testid="stPopover"] > button:hover {
+        button[data-testid="stPopoverButton"]:hover,
+        div.st-key-customer-nav button:hover {
             border-color: #30231e !important;
             color: #fffaf5 !important;
             background: linear-gradient(110deg, #3b2922, #b56a46) !important;
@@ -190,49 +194,42 @@ if role == "Khách hàng":
 
     with management:
 
-        with st.popover(
-            "Quản lý",
-            type="primary",
-            use_container_width=True
-        ):
-
-            st.markdown("### Đăng nhập chủ quán")
-
-            manager_password = st.text_input(
-                "Mật khẩu",
-                type="password",
-                key="manager_password"
-            )
-
-            if st.button(
-                "Vào giao diện chủ quán",
+        with st.container(key="management-nav"):
+            with st.popover(
+                "Quản lý",
                 type="primary",
                 use_container_width=True
             ):
 
-                if manager_password == admin.ADMIN_PASSWORD:
+                st.markdown("### Đăng nhập chủ quán")
 
-                    st.session_state.admin_authenticated = True
-                    st.session_state.role = "Chủ quán"
-                    st.rerun()
+                manager_password = st.text_input(
+                    "Mật khẩu",
+                    type="password",
+                    key="manager_password"
+                )
 
-                else:
+                if st.button(
+                    "Vào giao diện chủ quán",
+                    type="primary",
+                    use_container_width=True
+                ):
 
-                    st.error("Mật khẩu không đúng.")
+                    if manager_password == admin.ADMIN_PASSWORD:
+
+                        st.session_state.admin_authenticated = True
+                        st.session_state.role = "Chủ quán"
+                        st.rerun()
+
+                    else:
+
+                        st.error("Mật khẩu không đúng.")
 
 
     customer.render()
 
 
 else:
-
-    if st.button(
-        "Khách hàng",
-        type="secondary"
-    ):
-        st.session_state.role = "Khách hàng"
-        st.session_state.admin_authenticated = False
-        st.rerun()
 
     if admin.is_authenticated():
 
@@ -246,6 +243,18 @@ else:
             """,
             unsafe_allow_html=True
         )
+
+        _, _, _, _, customer_nav = st.columns(5)
+        with customer_nav:
+            with st.container(key="customer-nav"):
+                if st.button(
+                    "Khách hàng",
+                    type="primary",
+                    use_container_width=True
+                ):
+                    st.session_state.role = "Khách hàng"
+                    st.session_state.admin_authenticated = False
+                    st.rerun()
 
         admin.render()
 
