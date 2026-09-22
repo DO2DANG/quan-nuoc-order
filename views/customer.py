@@ -125,9 +125,9 @@ def show_welcome_screen():
 
 
 def render():
-    if "started_ordering" not in st.session_state:
-        st.session_state.started_ordering = False
-
+    st.session_state.started_ordering = st.session_state.get(
+        "started_ordering", False
+    )
     if not st.session_state.started_ordering:
         show_welcome_screen()
         return
@@ -393,55 +393,22 @@ def render():
                         "Vui lòng nhập đủ tên, số điện thoại và số bàn."
                     )
                 else:
-                    st.session_state.pending_order = {
-                        "name": customer_name,
-                        "phone": customer_phone,
-                        "table_num": table_num,
-                        "items": order_items,
-                        "total": total
-                    }
-
-                    st.rerun()
-
-            # ==============================
-            # XÁC NHẬN THANH TOÁN
-            # ==============================
-            pending_order = st.session_state.get("pending_order")
-
-            if pending_order:
-                st.divider()
-
-                st.markdown("#### Xác nhận thanh toán")
-
-                st.write(
-                    f"Đơn của **{pending_order['name']}** - "
-                    f"{format_price(pending_order['total'])}"
-                )
-
-                st.info(
-                    "Sau khi chuyển khoản, hãy bấm nút bên dưới để "
-                    "lưu đơn hàng và xem hóa đơn kèm mã VietQR."
-                )
-
-                if st.button(
-                    "Đã hoàn thành thanh toán",
-                    type="primary",
-                    use_container_width=True
-                ):
+                    # Lưu đơn hàng ngay khi bấm "Tiếp tục thanh toán"
                     order_id = database.save_order(
-                        pending_order["name"],
-                        pending_order["phone"],
-                        pending_order["table_num"],
-                        pending_order["items"],
-                        pending_order["total"]
+                        customer_name,
+                        customer_phone,
+                        table_num,
+                        order_items,
+                        total
                     )
 
+                    # Mở hóa đơn ngay
                     st.session_state.last_order_id = order_id
                     st.session_state.show_invoice = True
 
+                    # Xóa giỏ hàng
                     st.session_state.cart = {}
                     st.session_state.customer_discount_percent = 0
-                    st.session_state.pop("pending_order", None)
 
                     st.rerun()
 
