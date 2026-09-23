@@ -130,11 +130,58 @@ st.markdown(
             font-size: 52px;
             font-weight: 700;
             margin-bottom: 12px;
+            line-height: 0.95;
+            letter-spacing: -1px;
         }
 
         .banner-text {
             color: #fceee5;
             font-size: 17px;
+            line-height: 1.5;
+            max-width: 620px;
+        }
+
+        @media (max-width: 768px) {
+            .cafe-banner {
+                padding: 22px 20px;
+            }
+
+            .banner-layout {
+                display: block;
+                min-height: auto;
+            }
+
+            .banner-left {
+                width: 100%;
+                margin-bottom: 18px;
+            }
+
+            .banner-title {
+                font-size: 42px;
+                line-height: 0.95;
+            }
+
+            .banner-small {
+                font-size: 11px;
+                letter-spacing: 2px;
+                margin-bottom: 12px;
+            }
+
+            .banner-text {
+                font-size: 15px;
+            }
+
+            .banner-qr {
+                width: 100%;
+                min-width: 100%;
+                padding: 0;
+                margin-top: 10px;
+            }
+
+            .banner-qr img {
+                width: 110px;
+                height: 110px;
+            }
         }
 
         .info-box {
