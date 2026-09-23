@@ -1,5 +1,8 @@
+import base64
+import io
 import streamlit as st
 import textwrap
+import qrcode
 import database
 from views import admin, customer
 
@@ -72,6 +75,42 @@ st.markdown(
             margin-top: 55px;
             margin-bottom: 50px;
         }
+
+        .banner-layout {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1.5rem;
+            min-height: 260px;
+        }
+
+        .banner-left {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-width: 0;
+        }
+
+        .banner-qr {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 190px;
+            min-width: 190px;
+            padding: 8px 12px;
+        }
+
+        .banner-qr img {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            border-radius: 18px;
+            background: #fffaf5;
+            padding: 10px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+        }
+
         .block-container {
             padding-top: 0.5rem !important;
             padding-bottom: 2rem !important;
@@ -116,22 +155,48 @@ st.markdown(
 )
 
 
+def generate_qr_code(url: str):
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(url)
+    qr.make(fit=True)
+    image = qr.make_image(fill_color="#30231e", back_color="#fffaf5")
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
+    return buffer.getvalue()
+
+
 role = st.session_state.get("role", "Khách hàng")
 
 
 if role == "Khách hàng":
 
+    fixed_url = "https://quan-nuoc-order-rsckzv8cw4dnd4s6offztv.streamlit.app/"
+    qr_image = generate_qr_code(fixed_url)
+    qr_base64 = base64.b64encode(qr_image).decode("utf-8")
+    qr_html = f'<img src="data:image/png;base64,{qr_base64}" alt="QR Code" />'
+
     st.markdown(
-        """
+        f"""
         <div class="cafe-banner">
-            <div class="banner-small">FRESHLY BREWED · SINCE 2024</div>
-            <div class="banner-title">Nhóm 27 coffee</div>
-            <div class="banner-text">Một khoảng nghỉ nhỏ, một ly nước vừa vặn với ngày hôm nay.</div>
+            <div class="banner-layout">
+                <div class="banner-left">
+                    <div class="banner-small">FRESHLY BREWED · SINCE 2024</div>
+                    <div class="banner-title">Nhóm 27 coffee</div>
+                    <div class="banner-text">Một khoảng nghỉ nhỏ, một ly nước vừa vặn với ngày hôm nay.</div>
+                </div>
+                <div class="banner-qr">
+                    {qr_html}
+                </div>
+            </div>
         </div>
         """,
         unsafe_allow_html=True
     )
-
 
     info1, info2, info3, info4, management = st.columns(5)
 
@@ -224,7 +289,6 @@ if role == "Khách hàng":
                     else:
 
                         st.error("Mật khẩu không đúng.")
-
 
     customer.render()
 

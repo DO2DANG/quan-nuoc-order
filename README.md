@@ -42,6 +42,23 @@ python -m streamlit run app.py
 Mở địa chỉ được Streamlit hiển thị: `http://localhost:8501`.
 Dừng chương trình bằng `Ctrl + C`.
 
+## Cập nhật và phát triển
+
+Lấy thay đổi mới nhất trước khi làm việc:
+
+```powershell
+git pull origin main
+```
+
+Sau khi kiểm tra thay đổi:
+
+```powershell
+git add .
+git commit -m "Mo ta ngan gon thay doi"
+git push origin main
+```
+
+
 ## Cấu trúc dự án
 
 ```text
@@ -94,22 +111,7 @@ Chính sách trong file SQL cho phép ứng dụng demo đọc/ghi bằng anon k
 - `README.md`: tài liệu cài đặt, chạy và giới thiệu dự án.
 - `orders.db`: cơ sở dữ liệu được tạo tự động khi chạy ứng dụng; không cần tạo thủ công.
 
-## Cập nhật và phát triển
-
-Lấy thay đổi mới nhất trước khi làm việc:
-
-```powershell
-git pull origin main
-```
-
-Sau khi kiểm tra thay đổi:
-
-```powershell
-git add .
-git commit -m "Mo ta ngan gon thay doi"
-git push origin main
-```
-
+# Lưu ý
 Để thêm món mặc định, chỉnh `data/menu_mac_dinh.json` hoặc sử dụng giao diện quản trị. Khi thêm món trên web, chọn ảnh JPG, JPEG, PNG hoặc WEBP từ máy; ứng dụng sẽ tự lưu ảnh vào `assets/images/`. Có thể chỉnh màu và giao diện trong `.streamlit/config.toml`.
 
 Khu vực **Chủ quán** hiện dùng mật khẩu demo `1`; cần đổi mật khẩu trong `views/admin.py` trước khi triển khai thật. Thông tin VietQR mặc định cũng chỉ dùng cho mục đích demo.

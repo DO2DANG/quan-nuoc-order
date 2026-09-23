@@ -262,7 +262,6 @@ def save_uploaded_image(uploaded_image):
 
 
 def render():
-    st.markdown("## Bảng điều hành quán")
     menu_tab, orders_tab, combo_tab , traffic_tab, discount_tab, dashboard_tab = st.tabs(["Quản lý menu", "Lịch sử đơn hàng", "Phân tích combo","Khung giờ cao điểm","Mã giảm giá","Doanh thu"])
     with menu_tab:
         st.markdown("### Thêm món mới")
