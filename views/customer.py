@@ -2,7 +2,6 @@ from pathlib import Path
 from urllib.parse import quote
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 import database
 
@@ -242,62 +241,10 @@ def render():
 
                     st.toast(f"Đã thêm {item['name']}")
 
-    cart_count = sum(st.session_state.get("cart", {}).values())
-    mobile_shortcut = """
-    <style>
-    @media (max-width: 768px) {
-        .mobile-cart-shortcut {
-            position: fixed;
-            right: 18px;
-            bottom: 24px;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            background: linear-gradient(135deg, #30231e, #a75d3b);
-            border-radius: 999px;
-            padding: 10px 16px;
-            box-shadow: 0 10px 30px rgba(48, 35, 30, 0.3);
-            color: white;
-            font-weight: 700;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        .mobile-cart-shortcut .badge {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            background: #fffaf5;
-            color: #30231e;
-            font-size: 12px;
-            font-weight: 700;
-        }
-    }
-
-    @media (min-width: 769px) {
-        .mobile-cart-shortcut {
-            display: none !important;
-        }
-    }
-    </style>
-
-    <div class="mobile-cart-shortcut" id="mobile-cart-shortcut" onclick="var target = document.getElementById('mobile-cart-anchor'); if (target) { target.scrollIntoView({behavior: 'smooth', block: 'start'}); }">
-        <span>🛒</span>
-        <span class="badge">""" + str(cart_count) + """</span>
-    </div>
-    """
-    components.html(mobile_shortcut, height=60)
-
     # ==============================
     # GIỎ HÀNG
     # ==============================
     with cart_column:
-        st.markdown('<div id="mobile-cart-anchor"></div>', unsafe_allow_html=True)
         st.markdown("### Giỏ hàng")
 
         combos_list = database.list_combos()
