@@ -1,5 +1,7 @@
 from pathlib import Path
 import base64
+from io import BytesIO
+from PIL import Image
 from urllib.parse import quote
 
 import streamlit as st
@@ -142,7 +144,7 @@ def render():
         show_welcome_screen()
         return
 
-    menu = database.list_menu()
+    menu = get_cached_menu()
 
     # ==============================
     # HIỂN THỊ HÓA ĐƠN TRONG HỘP THOẠI
@@ -187,10 +189,16 @@ def render():
         or item["category"] == selected_category
     ]
 
-    menu_column, cart_column = st.columns(
-        [1.7, 1],
-        gap="large"
-    )
+    if st.session_state.get("last_menu_category") != selected_category:
+        st.session_state.last_menu_category = selected_category
+        st.session_state.menu_page = 1
+
+    total_pages = max(1, (len(filtered_menu) + MENU_PAGE_SIZE - 1) // MENU_PAGE_SIZE)
+    current_page = min(st.session_state.get("menu_page", 1), total_pages)
+    start_index = (current_page - 1) * MENU_PAGE_SIZE
+    visible_menu = filtered_menu[start_index:start_index + MENU_PAGE_SIZE]
+
+    menu_column, cart_column = st.columns([1.7, 1], gap="large")
 
     # ==============================
     # HIỂN THỊ MENU
@@ -198,73 +206,51 @@ def render():
     with menu_column:
         product_columns = st.columns(2)
 
-        for index, item in enumerate(filtered_menu):
+        for index, item in enumerate(visible_menu):
             with product_columns[index % 2]:
-
                 image_path = (
-                    BASE_DIR / item["image_url"]
+                    BASE_DIR / item.get("image_url", "")
                     if item.get("image_url")
                     else DEFAULT_IMAGE_PATH
                 )
-
                 if not image_path.exists():
                     image_path = DEFAULT_IMAGE_PATH
 
-                if image_path.exists():
-                    # Khung ảnh cố định 4:3 để tất cả món có cùng kích thước
-                    image_base64 = get_image_base64(
-                        str(image_path),
-                        image_path.stat().st_mtime_ns
-                    )
+                image_uri = get_image_data_uri(
+                    str(image_path), image_path.stat().st_mtime_ns
+                )
 
-                    image_format = image_path.suffix.lower().replace(".", "")
-                    if image_format == "jpg":
-                        image_format = "jpeg"
-
+                if image_uri:
                     st.markdown(
                         f"""
-                        <div style="
-                            width: 100%;
-                            aspect-ratio: 4 / 3;
-                            overflow: hidden;
-                            border-radius: 12px;
-                            margin-bottom: 10px;
-                            background: #f5f5f5;
-                        ">
-                            <img
-                                src="data:image/{image_format};base64,{image_base64}"
-                                style="
-                                    width: 100%;
-                                    height: 100%;
-                                    object-fit: cover;
-                                    display: block;
-                                "
-                            >
+                        <div style="width:100%;aspect-ratio:4/3;overflow:hidden;border-radius:12px;margin-bottom:10px;background:#f5f5f5;">
+                            <img src="{image_uri}" loading="lazy" decoding="async"
+                                 style="width:100%;height:100%;object-fit:cover;display:block;">
                         </div>
                         """,
                         unsafe_allow_html=True
                     )
 
                 st.markdown(f"### {item['name']}")
+                st.caption(item["description"] or item["category"])
+                st.markdown(f"**{format_price(item['price'])}**")
 
-                st.caption(
-                    item["description"] or item["category"]
-                )
-
-                st.markdown(
-                    f"**{format_price(item['price'])}**"
-                )
-
-                if st.button(
-                    "+ Thêm vào giỏ",
-                    key=f"add_{item['id']}",
-                    use_container_width=True
-                ):
-                    st.session_state.cart[item["id"]] = (
-                        st.session_state.cart.get(item["id"], 0) + 1
-                    )
-
+                if st.button("+ Thêm vào giỏ", key=f"add_{item['id']}", use_container_width=True):
+                    st.session_state.cart[item["id"]] = st.session_state.cart.get(item["id"], 0) + 1
                     st.toast(f"Đã thêm {item['name']}")
+
+        if total_pages > 1:
+            prev_col, page_col, next_col = st.columns([1, 2, 1])
+            with prev_col:
+                if st.button("← Trước", disabled=current_page <= 1, use_container_width=True):
+                    st.session_state.menu_page = current_page - 1
+                    st.rerun()
+            with page_col:
+                st.markdown(f"<div style='text-align:center;padding-top:7px;'>Trang <b>{current_page}</b> / {total_pages}</div>", unsafe_allow_html=True)
+            with next_col:
+                if st.button("Sau →", disabled=current_page >= total_pages, use_container_width=True):
+                    st.session_state.menu_page = current_page + 1
+                    st.rerun()
 
     # ==============================
     # GIỎ HÀNG
