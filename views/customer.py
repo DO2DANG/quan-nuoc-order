@@ -1,4 +1,5 @@
 from pathlib import Path
+import base64
 from urllib.parse import quote
 
 import streamlit as st
@@ -149,24 +150,7 @@ def render():
     # ==============================
     st.markdown("## Đặt nước tại Nhóm 27 coffee")
     st.caption("Chọn món, xác nhận thông tin và thanh toán bằng VietQR.")
-    combos = database.list_combos()
-    if combos:
-        st.markdown("### 🔥 Combo Ưu Đãi Đặc Biệt")
-        combo_cols = st.columns(min(len(combos), 2))
-        for idx, combo in enumerate(combos):
-            with combo_cols[idx % len(combo_cols)]:
-                with st.container(border=True):
-                    st.markdown(f"**🎁 {combo['name']}**")
-                    items_str = " + ".join(combo['items'])
-                    st.caption(f"Bao gồm: {items_str}")
-                    st.markdown(f"**Giá:** {format_price(combo['price'])}")
-                    
-                    if st.button(f"Chọn combo này", key=f"add_combo_{combo['id']}", use_container_width=True):
-                        # Thêm combo vào giỏ hàng dưới dạng một sản phẩm gộp
-                        combo_key = f"combo_{combo['id']}"
-                        st.session_state.cart[combo_key] = st.session_state.cart.get(combo_key, 0) + 1
-                        st.toast(f"Đã thêm combo {combo['name']} vào giỏ hàng!")
-        st.divider()
+
     # Khởi tạo giỏ hàng
     if "cart" not in st.session_state:
         st.session_state.cart = {}
@@ -215,9 +199,37 @@ def render():
                 )
 
                 if image_path and image_path.exists():
-                    st.image(
-                        str(image_path),
-                        use_container_width=True
+                    # Khung ảnh cố định 4:3 để tất cả món có cùng kích thước
+                    image_base64 = base64.b64encode(
+                        image_path.read_bytes()
+                    ).decode()
+
+                    image_format = image_path.suffix.lower().replace(".", "")
+                    if image_format == "jpg":
+                        image_format = "jpeg"
+
+                    st.markdown(
+                        f"""
+                        <div style="
+                            width: 100%;
+                            aspect-ratio: 4 / 3;
+                            overflow: hidden;
+                            border-radius: 12px;
+                            margin-bottom: 10px;
+                            background: #f5f5f5;
+                        ">
+                            <img
+                                src="data:image/{image_format};base64,{image_base64}"
+                                style="
+                                    width: 100%;
+                                    height: 100%;
+                                    object-fit: cover;
+                                    display: block;
+                                "
+                            >
+                        </div>
+                        """,
+                        unsafe_allow_html=True
                     )
 
                 st.markdown(f"### {item['name']}")
@@ -247,23 +259,12 @@ def render():
     with cart_column:
         st.markdown("### Giỏ hàng")
 
-        combos_list = database.list_combos()
-        combos_as_items = [
-            {
-                "id": f"combo_{c['id']}",
-                "name": f"🎁 Combo: {c['name']} ({' + '.join(c['items'])})",
-                "price": c['price'],
-                "category": "Combo"
-            }
-            for c in combos_list
-        ]
-        all_products = menu + combos_as_items
-
         selected_items = [
             item
-            for item in all_products
+            for item in menu
             if st.session_state.cart.get(item["id"], 0) > 0
         ]
+
         if not selected_items:
             st.info("Giỏ hàng đang trống.")
 
@@ -393,7 +394,7 @@ def render():
                         "Vui lòng nhập đủ tên, số điện thoại và số bàn."
                     )
                 else:
-                    # Lưu đơn hàng ngay khi bấm "Tiếp tục thanh toán"
+                    # Lưu đơn ngay khi bấm "Tiếp tục thanh toán"
                     order_id = database.save_order(
                         customer_name,
                         customer_phone,
@@ -402,11 +403,11 @@ def render():
                         total
                     )
 
-                    # Mở hóa đơn ngay
+                    # Mở hóa đơn ngay, không cần bước xác nhận thanh toán
                     st.session_state.last_order_id = order_id
                     st.session_state.show_invoice = True
 
-                    # Xóa giỏ hàng
+                    # Xóa giỏ hàng sau khi tạo đơn
                     st.session_state.cart = {}
                     st.session_state.customer_discount_percent = 0
 
