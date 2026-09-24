@@ -24,6 +24,14 @@
     "image": "assets/images/cappuccino.png"
   },
   {
+    "id": "americano",
+    "name": "Americano",
+    "category": "Cà phê",
+   "description": "Espresso pha loãng với nước, vị cà phê thanh và đậm.",
+    "price": 35000,
+    "image": "assets/images/americano.png"
+  },
+  {
     "id": "tra-dao",
     "name": "Trà đào cam sả",
     "category": "Trà trái cây",
@@ -48,12 +56,44 @@
     "image": "assets/images/trachanh.png"
   },
   {
+    "id": "tra-olong",
+    "name": "Trà ô long",
+    "category": "Trà trái cây",
+    "description": "Trà ô long thơm dịu, vị thanh nhẹ và dễ uống.",
+    "price": 30000,
+    "image": "assets/images/tra_olong.png"
+  },
+  {
+    "id": "nuoc-cam",
+    "name": "Nước cam",
+    "category": "Nước ép",
+    "description": "Nước cam tươi nguyên chất, chua ngọt tự nhiên.",
+    "price": 30000,
+    "image": "assets/images/nuoc_cam.png"
+  },
+    {
+    "id": "nuoc-ep-dua-hau",
+    "name": "Nước ép dưa hấu",
+    "category": "Nước ép",
+    "description": "Dưa hấu tươi ép lạnh, vị ngọt thanh và mát.",
+    "price": 30000,
+    "image": "assets/images/nuoc_dua_hau.png"
+  },
+    {
     "id": "matcha-da-xay",
     "name": "Matcha đá xay",
     "category": "Đá xay",
     "description": "Matcha xanh thơm, xay lạnh cùng kem sữa mịn.",
     "price": 45000,
     "image": "assets/images/matcha_da_xay.jpg"
+  },
+  {
+    "id": "matcha-latte",
+    "name": "Matcha Latte",
+    "category": "Đá xay",
+    "description": "Matcha thơm nhẹ kết hợp sữa tươi béo mịn.",
+    "price": 42000,
+    "image": "assets/images/matcha_latte.png"
   },
   {
     "id": "dau-da-xay",
@@ -72,12 +112,44 @@
     "image": "assets/images/soda_chanh.png"
   },
   {
+    "id": "tiramisu",
+    "name": "Tiramisu",
+    "category":"Bánh ngọt",
+    "description": "Bánh mềm mịn, thơm cà phê và cacao.",
+    "price": 35000,
+    "image": "assets/images/tiramisu.png"
+  },
+    {
+    "id": "banh-su-kem",
+    "name": "Bánh su kem",
+    "category": "Bánh ngọt",
+    "description": "Vỏ bánh mềm nhẹ, nhân kem sữa béo mịn.",
+    "price": 28000,
+    "image": "assets/images/banh_su_kem.png"
+  },
+    {
+    "id": "banh-croissant",
+    "name": "Bánh sừng bò",
+    "category": "Bánh ngọt",
+    "description": "Bánh sừng bò nhiều lớp, giòn nhẹ bên ngoài và mềm bên trong.",
+    "price": 30000,
+    "image": "assets/images/croissant.png"
+  },
+    {
     "id": "khoai-tay-chien",
     "name": "Khoai tây chiên",
     "category": "Đồ ăn nhẹ",
     "description": "Khoai tây cắt que chiên giòn, bên ngoài vàng nhẹ, bên trong mềm.",
     "price": 30000,
     "image": "assets/images/khoai_tay_chien.png"
+  },
+    {
+    "id": "ga-ran",
+    "name": "Gà rán",
+    "category": "Đồ ăn nhẹ",
+    "description": "Gà chiên giòn bên ngoài, thịt mềm thơm bên trong.",
+    "price": 45000,
+    "image": "assets/images/ga_ran.png"
   },
   {
     "id": "sandwich",

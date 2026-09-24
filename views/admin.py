@@ -270,7 +270,7 @@ def render():
             price = st.number_input("Giá (VNĐ)", min_value=0, step=1000, value=0)
             if price > 0:
                 st.caption(f"👉 Giá đã chọn: **{price:,.0f} đ**".replace(",", "."))
-            category = st.selectbox("Danh mục",options=["Cà phê", "Trà trái cây", "Soda", "Đá xay", "Đồ ăn nhẹ"],)
+            category = st.selectbox("Danh mục",options=["Cà phê", "Trà trái cây","Nước ép", "Soda", "Đá xay","Bánh ngọt", "Đồ ăn nhẹ"],)
             uploaded_image = st.file_uploader("Chọn ảnh món từ máy", type=sorted(ALLOWED_IMAGE_TYPES))
             description = st.text_input("Mô tả")
             if st.form_submit_button("Thêm món", type="primary"):

@@ -377,4 +377,3 @@ else:
             "Vui lòng sử dụng nút Quản lý ở phía trên "
             "để đăng nhập vào giao diện chủ quán."
         )
-
