@@ -3,6 +3,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from uuid import uuid4
 from collections import Counter
+from io import BytesIO
+from PIL import Image
 import streamlit as st
 import database
 
@@ -11,6 +13,8 @@ ADMIN_PASSWORD = "1"
 BASE_DIR = Path(__file__).parents[1]
 IMAGE_DIR = BASE_DIR / "assets" / "images"
 ALLOWED_IMAGE_TYPES = {"jpg", "jpeg", "png", "webp"}
+DEFAULT_IMAGE_PATH = IMAGE_DIR / "no_image.jpg"
+MAX_IMAGE_SIZE = (1000, 750)
 
 def format_time_vn(value):
     try:
@@ -249,16 +253,36 @@ def format_price(price):
 
 
 def save_uploaded_image(uploaded_image):
+    """Resize + nén ảnh ngay khi upload để menu tải nhanh hơn."""
+    IMAGE_DIR.mkdir(parents=True, exist_ok=True)
+
+    # Không chọn ảnh -> dùng ảnh no_image mặc định.
     if uploaded_image is None:
-        return ""
+        return "assets/images/no_image.jpg"
+
     extension = Path(uploaded_image.name).suffix.lower().lstrip(".")
     if extension not in ALLOWED_IMAGE_TYPES:
         raise ValueError("Chỉ hỗ trợ ảnh JPG, JPEG, PNG hoặc WEBP.")
-    IMAGE_DIR.mkdir(parents=True, exist_ok=True)
-    file_name = f"{uuid4().hex}.{extension}"
-    file_path = IMAGE_DIR / file_name
-    file_path.write_bytes(uploaded_image.getbuffer())
-    return f"assets/images/{file_name}"
+
+    try:
+        image = Image.open(uploaded_image)
+        image = image.convert("RGB")
+        image.thumbnail(MAX_IMAGE_SIZE, Image.Resampling.LANCZOS)
+
+        file_name = f"{uuid4().hex}.jpg"
+        file_path = IMAGE_DIR / file_name
+
+        # JPEG nhỏ hơn PNG/JPG gốc rất nhiều trong đa số trường hợp.
+        image.save(
+            file_path,
+            format="JPEG",
+            quality=82,
+            optimize=True
+        )
+
+        return f"assets/images/{file_name}"
+    except Exception as error:
+        raise ValueError(f"Không thể xử lý ảnh: {error}")
 
 
 def render():

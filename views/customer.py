@@ -8,6 +8,15 @@ import database
 
 
 BASE_DIR = Path(__file__).parents[1]
+DEFAULT_IMAGE_PATH = BASE_DIR / "assets" / "images" / "no_image.jpg"
+
+
+@st.cache_data(max_entries=200, show_spinner=False)
+def get_image_base64(image_path_str, modified_time):
+    path = Path(image_path_str)
+    if not path.exists():
+        path = DEFAULT_IMAGE_PATH
+    return base64.b64encode(path.read_bytes()).decode()
 
 
 def format_price(price):
@@ -194,15 +203,19 @@ def render():
 
                 image_path = (
                     BASE_DIR / item["image_url"]
-                    if item["image_url"]
-                    else None
+                    if item.get("image_url")
+                    else DEFAULT_IMAGE_PATH
                 )
 
-                if image_path and image_path.exists():
+                if not image_path.exists():
+                    image_path = DEFAULT_IMAGE_PATH
+
+                if image_path.exists():
                     # Khung ảnh cố định 4:3 để tất cả món có cùng kích thước
-                    image_base64 = base64.b64encode(
-                        image_path.read_bytes()
-                    ).decode()
+                    image_base64 = get_image_base64(
+                        str(image_path),
+                        image_path.stat().st_mtime_ns
+                    )
 
                     image_format = image_path.suffix.lower().replace(".", "")
                     if image_format == "jpg":

@@ -19,6 +19,7 @@ except ImportError:
 BASE_DIR = Path(__file__).parent
 DB_PATH = BASE_DIR / "orders.db"
 MENU_FILE = BASE_DIR / "data" / "menu_mac_dinh.json"
+DEFAULT_IMAGE = "assets/images/no_image.jpg"
 _supabase_client = None
 
 
@@ -157,25 +158,33 @@ def init_db():
 def list_menu():
     client = _remote_client()
     if client:
-        return client.table("menu").select("*").order("category").order("name").execute().data
-    with get_connection() as connection:
-        return [dict(row) for row in connection.execute("SELECT * FROM menu ORDER BY category, name")]
+        rows = client.table("menu").select("*").order("category").order("name").execute().data
+    else:
+        with get_connection() as connection:
+            rows = [dict(row) for row in connection.execute("SELECT * FROM menu ORDER BY category, name")]
+
+    # Món chưa có ảnh sẽ dùng ảnh mặc định.
+    for row in rows:
+        if not row.get("image_url"):
+            row["image_url"] = DEFAULT_IMAGE
+
+    return rows
 
 
 def add_menu_item(name, price, category, image_url, description=""):
     item_id = f"item-{datetime.now().strftime('%Y%m%d%H%M%S%f')}"
     client = _remote_client()
     if client:
-        client.table("menu").insert({"id": item_id, "name": name.strip(), "price": price, "category": category.strip(), "image_url": image_url.strip(), "description": description.strip()}).execute()
+        client.table("menu").insert({"id": item_id, "name": name.strip(), "price": price, "category": category.strip(), "image_url": image_url.strip() or DEFAULT_IMAGE, "description": description.strip()}).execute()
         return
     with get_connection() as connection:
-        connection.execute("INSERT INTO menu (id, name, price, category, image_url, description) VALUES (?, ?, ?, ?, ?, ?)", (item_id, name.strip(), price, category.strip(), image_url.strip(), description.strip()))
+        connection.execute("INSERT INTO menu (id, name, price, category, image_url, description) VALUES (?, ?, ?, ?, ?, ?)", (item_id, name.strip(), price, category.strip(), image_url.strip() or DEFAULT_IMAGE, description.strip()))
 
 
 def update_menu_item(item_id, name, price, category, image_url, description=""):
     client = _remote_client()
     if client:
-        client.table("menu").update({"name": name.strip(), "price": price, "category": category.strip(), "image_url": image_url.strip(), "description": description.strip()}).eq("id", item_id).execute()
+        client.table("menu").update({"name": name.strip(), "price": price, "category": category.strip(), "image_url": image_url.strip() or DEFAULT_IMAGE, "description": description.strip()}).eq("id", item_id).execute()
         return
     with get_connection() as connection:
         connection.execute("UPDATE menu SET name = ?, price = ?, category = ?, image_url = ?, description = ? WHERE id = ?", (name.strip(), price, category.strip(), image_url.strip(), description.strip(), item_id))
@@ -320,11 +329,13 @@ def get_dashboard():
 def get_order_by_id(order_id):
     client = _remote_client()
 
-    # Nếu đang sử dụng Supabase
+    # =========================
+    # SUPABASE
+    # =========================
     if client:
         response = (
             client.table("orders")
-            .select("*, customers(name, phone, table_num)")
+            .select("*")
             .eq("id", order_id)
             .limit(1)
             .execute()
@@ -335,20 +346,36 @@ def get_order_by_id(order_id):
 
         order = response.data[0]
 
-        # Lấy thông tin khách hàng
-        customer = order.pop("customers", {}) or {}
+        # Lấy customer_id rồi truy vấn riêng customers
+        customer_id = order.get("customer_id")
+
+        customer = {}
+
+        if customer_id:
+            customer_response = (
+                client.table("customers")
+                .select("name, phone, table_num")
+                .eq("id", customer_id)
+                .limit(1)
+                .execute()
+            )
+
+            if customer_response.data:
+                customer = customer_response.data[0]
 
         order["name"] = customer.get("name", "")
         order["phone"] = customer.get("phone", "")
         order["table_num"] = customer.get("table_num", "")
 
         # Xử lý items
-        if isinstance(order["items"], str):
+        if isinstance(order.get("items"), str):
             order["items"] = json.loads(order["items"])
 
         return order
 
-    # Nếu đang sử dụng SQLite
+    # =========================
+    # SQLITE
+    # =========================
     with get_connection() as conn:
         row = conn.execute(
             """
@@ -374,7 +401,8 @@ def get_order_by_id(order_id):
 
         order = dict(row)
 
-        if isinstance(order["items"], str):
+        # Xử lý items
+        if isinstance(order.get("items"), str):
             order["items"] = json.loads(order["items"])
 
         return order
