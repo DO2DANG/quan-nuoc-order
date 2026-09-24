@@ -329,58 +329,43 @@ def show_invoice(order):
 # ============================================================
 
 def show_welcome_screen():
+    """Màn hình chào mừng trước khi khách bắt đầu đặt món."""
+
+    st.write("")
+
     st.markdown(
-        dedent("""
-        <style>
-        .welcome-box {
-            text-align: center;
-            padding: 60px 25px;
-            border-radius: 22px;
-            background: linear-gradient(135deg, #fff8ed, #f7e3c5);
-            margin: 35px auto;
-            max-width: 850px;
-            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-        }
-
-        .welcome-title {
-            font-size: 38px;
-            font-weight: 700;
-            margin-bottom: 18px;
-            color: #4b2e1f;
-        }
-
-        .welcome-subtitle {
-            font-size: 20px;
-            line-height: 1.7;
-            color: #5f4638;
-        }
-        </style>
-
-        <div class="welcome-box">
-            <div class="welcome-title">
-                ☕ KÍNH CHÀO QUÝ KHÁCH
-            </div>
-
-            <div class="welcome-subtitle">
-                Chào mừng bạn đến với <b>Nhóm 27 Coffee</b><br>
+        """
+        <div style="text-align:center;">
+            <h1>☕ KÍNH CHÀO QUÝ KHÁCH</h1>
+            <h3>Chào mừng bạn đến với <b>Nhóm 27 Coffee</b></h3>
+            <p>
                 Hãy chọn món yêu thích và tận hưởng<br>
                 thức uống của bạn!
-            </div>
+            </p>
         </div>
-        """),
-        unsafe_allow_html=True,
+        """,
+        unsafe_allow_html=True
     )
 
-    left, center, right = st.columns([1, 2, 1])
+    st.write("")
+
+    left, center, right = st.columns(
+        [1, 2, 1]
+    )
 
     with center:
+
         if st.button(
             "🛒 ĐẶT MÓN NGAY",
             type="primary",
-            use_container_width=True,
+            use_container_width=True
         ):
+
             st.session_state.started_ordering = True
+
             st.rerun()
+
+
 # ============================================================
 # RENDER CHÍNH
 # ============================================================
@@ -1158,14 +1143,6 @@ def render():
             st.session_state.customer_discount_percent = (
                 0
             )
-
-            # ================================================
-            # RESET MÃ VOUCHER
-            # ================================================
-
-            if "voucher_input" in st.session_state:
-
-                st.session_state.voucher_input = ""
 
             # ================================================
             # HIỂN THỊ HÓA ĐƠN
