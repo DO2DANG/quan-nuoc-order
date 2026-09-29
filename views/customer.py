@@ -477,6 +477,101 @@ def render():
     )
 
     # ========================================================
+    # ========================================================
+    # COMBO HIỂN THỊ TRƯỚC DANH MỤC
+    # ========================================================
+
+
+    # ========================================================
+    # COMBO LUÔN HIỂN THỊ TRÊN MENU
+    # ========================================================
+
+    st.divider()
+    st.markdown("## 🎁 COMBO")
+
+    if not combos:
+        st.info("Hiện chưa có combo nào.")
+    else:
+        combo_columns = st.columns(2)
+
+        for index, combo in enumerate(combos):
+            with combo_columns[index % 2]:
+
+                combo_id = combo.get("id")
+                combo_name = combo.get(
+                    "name",
+                    "Combo không tên"
+                )
+                combo_price = combo.get(
+                    "price",
+                    0
+                )
+
+                st.markdown(
+                    f"### 🎁 {combo_name}"
+                )
+
+                # Hiển thị các món bên trong combo
+                combo_items = combo.get("items", [])
+
+                if combo_items:
+                    combo_text = []
+
+                    for combo_item in combo_items:
+                        if isinstance(combo_item, dict):
+                            item_name = combo_item.get(
+                                "name",
+                                "Món"
+                            )
+                            quantity = combo_item.get(
+                                "quantity",
+                                1
+                            )
+
+                            if quantity > 1:
+                                combo_text.append(
+                                    f"{item_name} × {quantity}"
+                                )
+                            else:
+                                combo_text.append(item_name)
+                        else:
+                            combo_text.append(str(combo_item))
+
+                    st.caption(
+                        " + ".join(combo_text)
+                    )
+                else:
+                    st.caption(
+                        "Combo tiết kiệm - nhiều món trong một gói"
+                    )
+
+                st.markdown(
+                    f"**{format_price(combo_price)}**"
+                )
+
+                if st.button(
+                    "+ Thêm combo vào giỏ",
+                    key=f"add_combo_{combo_id}",
+                    use_container_width=True
+                ):
+                    combo_key = f"combo_{combo_id}"
+
+                    current = (
+                        st.session_state.cart.get(
+                            combo_key,
+                            0
+                        )
+                    )
+
+                    st.session_state.cart[
+                        combo_key
+                    ] = current + 1
+
+                    st.toast(
+                        f"Đã thêm {combo_name}"
+                    )
+
+
     # DANH MỤC
     # ========================================================
 
@@ -492,7 +587,6 @@ def render():
 
     categories = [
         "Tất cả",
-        "🎁 Combo",
         *categories
     ]
 
@@ -580,145 +674,123 @@ def render():
     )
 
     # ========================================================
-    # HIỂN THỊ MENU / COMBO
+    # HIỂN THỊ MENU
     # ========================================================
 
     with menu_column:
 
-        if selected_category == "🎁 Combo":
-            st.markdown("### 🎁 COMBO")
+        product_columns = st.columns(2)
 
-            if not combos:
-                st.info("Hiện chưa có combo nào.")
-            else:
-                combo_columns = st.columns(2)
+        for index, item in enumerate(visible_menu):
+            with product_columns[index % 2]:
 
-                for index, combo in enumerate(combos):
-                    with combo_columns[index % 2]:
-                        combo_id = combo.get("id")
-                        combo_name = combo.get("name", "Combo không tên")
-                        combo_price = combo.get("price", 0)
+                item_id = item.get("id")
+                if item_id is None:
+                    continue
 
-                        st.markdown(f"### 🎁 {combo_name}")
-                        st.caption("Combo tiết kiệm - nhiều món trong một gói")
-                        st.markdown(f"**{format_price(combo_price)}**")
+                image_url = item.get("image_url", "")
+                image_path = (
+                    BASE_DIR / image_url
+                    if image_url
+                    else DEFAULT_IMAGE_PATH
+                )
 
-                        if st.button(
-                            "+ Thêm combo vào giỏ",
-                            key=f"add_combo_{combo_id}",
-                            use_container_width=True
-                        ):
-                            combo_key = f"combo_{combo_id}"
-                            current = st.session_state.cart.get(combo_key, 0)
-                            st.session_state.cart[combo_key] = current + 1
-                            st.toast(f"Đã thêm {combo_name}")
+                if not image_path.exists():
+                    image_path = DEFAULT_IMAGE_PATH
 
-        else:
-            product_columns = st.columns(2)
+                image_uri = None
 
-            for index, item in enumerate(visible_menu):
-                with product_columns[index % 2]:
-
-                    item_id = item.get("id")
-                    if item_id is None:
-                        continue
-
-                    image_url = item.get("image_url", "")
-                    image_path = (
-                        BASE_DIR / image_url
-                        if image_url
-                        else DEFAULT_IMAGE_PATH
+                if image_path.exists():
+                    image_uri = get_image_data_uri(
+                        str(image_path),
+                        image_path.stat().st_mtime_ns
                     )
 
-                    if not image_path.exists():
-                        image_path = DEFAULT_IMAGE_PATH
-
-                    image_uri = None
-
-                    if image_path.exists():
-                        image_uri = get_image_data_uri(
-                            str(image_path),
-                            image_path.stat().st_mtime_ns
-                        )
-
-                    if image_uri:
-                        st.markdown(
-                            f"""
-                            <div style="
-                                width:100%;
-                                aspect-ratio:4/3;
-                                overflow:hidden;
-                                border-radius:12px;
-                                margin-bottom:10px;
-                                background:#f5f5f5;
-                            ">
-                                <img
-                                    src="{image_uri}"
-                                    loading="lazy"
-                                    decoding="async"
-                                    style="
-                                        width:100%;
-                                        height:100%;
-                                        object-fit:cover;
-                                        display:block;
-                                    "
-                                >
-                            </div>
-                            """,
-                            unsafe_allow_html=True
-                        )
-
-                    item_name = item.get("name", "Món không tên")
-                    st.markdown(f"### {item_name}")
-
-                    description = (
-                        item.get("description")
-                        or item.get("category")
-                        or ""
-                    )
-                    st.caption(description)
-
-                    item_price = item.get("price", 0)
-                    st.markdown(f"**{format_price(item_price)}**")
-
-                    if st.button(
-                        "+ Thêm vào giỏ",
-                        key=f"add_{item_id}",
-                        use_container_width=True
-                    ):
-                        current = st.session_state.cart.get(item_id, 0)
-                        st.session_state.cart[item_id] = current + 1
-                        st.toast(f"Đã thêm {item_name}")
-
-            if total_pages > 1:
-                prev_col, page_col, next_col = st.columns([1, 2, 1])
-
-                with prev_col:
-                    if st.button(
-                        "← Trước",
-                        disabled=current_page <= 1,
-                        use_container_width=True
-                    ):
-                        st.session_state.menu_page = current_page - 1
-                        st.rerun()
-
-                with page_col:
+                if image_uri:
                     st.markdown(
-                        f"<div style='text-align:center;padding-top:7px;'>"
-                        f"Trang <b>{current_page}</b> / <b>{total_pages}</b>"
-                        f"</div>",
+                        f"""
+                        <div style="
+                            width:100%;
+                            aspect-ratio:4/3;
+                            overflow:hidden;
+                            border-radius:12px;
+                            margin-bottom:10px;
+                            background:#f5f5f5;
+                        ">
+                            <img
+                                src="{image_uri}"
+                                loading="lazy"
+                                decoding="async"
+                                style="
+                                    width:100%;
+                                    height:100%;
+                                    object-fit:cover;
+                                    display:block;
+                                "
+                            >
+                        </div>
+                        """,
                         unsafe_allow_html=True
                     )
 
-                with next_col:
-                    if st.button(
-                        "Sau →",
-                        disabled=current_page >= total_pages,
-                        use_container_width=True
-                    ):
-                        st.session_state.menu_page = current_page + 1
-                        st.rerun()
+                item_name = item.get("name", "Món không tên")
+                st.markdown(f"### {item_name}")
 
+                description = (
+                    item.get("description")
+                    or item.get("category")
+                    or ""
+                )
+                st.caption(description)
+
+                item_price = item.get("price", 0)
+                st.markdown(f"**{format_price(item_price)}**")
+
+                if st.button(
+                    "+ Thêm vào giỏ",
+                    key=f"add_{item_id}",
+                    use_container_width=True
+                ):
+                    current = st.session_state.cart.get(item_id, 0)
+                    st.session_state.cart[item_id] = current + 1
+                    st.toast(f"Đã thêm {item_name}")
+
+        # --------------------------------------------------------
+        # PHÂN TRANG MÓN
+        # --------------------------------------------------------
+        if total_pages > 1:
+            prev_col, page_col, next_col = st.columns([1, 2, 1])
+
+            with prev_col:
+                if st.button(
+                    "← Trước",
+                    disabled=current_page <= 1,
+                    use_container_width=True
+                ):
+                    st.session_state.menu_page = current_page - 1
+                    st.rerun()
+
+            with page_col:
+                st.markdown(
+                    f"""
+                    <div style="
+                        text-align:center;
+                        padding-top:7px;
+                    ">
+                        Trang <b>{current_page}</b> / <b>{total_pages}</b>
+                    </div>
+                    """,
+                    unsafe_allow_html=True
+                )
+
+            with next_col:
+                if st.button(
+                    "Sau →",
+                    disabled=current_page >= total_pages,
+                    use_container_width=True
+                ):
+                    st.session_state.menu_page = current_page + 1
+                    st.rerun()
     # ========================================================
     # GIỎ HÀNG
     # ========================================================
