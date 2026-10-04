@@ -89,8 +89,8 @@ SQLite chỉ phù hợp khi chạy local vì filesystem của Streamlit Cloud c�
 2. Trong Streamlit Cloud, vào **Settings > Secrets** và thêm:
 
 ```toml
-SUPABASE_URL = "https://your-project.supabase.co"
-SUPABASE_KEY = "your-anon-key"
+SUPABASE_URL = "https://txxvrqfrvejckqgzgxje.supabase.co"
+SUPABASE_KEY = "sb_publishable_wK7vyRRV-kCICc5YRS95TA_PTmsm6Rd"
 ```
 
 3. Redeploy app. Khi hai Secret này tồn tại, ứng dụng dùng Supabase cho menu, đơn hàng, trạng thái và mã giảm giá; khi chạy local không có Secret, ứng dụng tự dùng `orders.db`.
