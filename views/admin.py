@@ -291,9 +291,19 @@ def render():
         st.markdown("### Thêm món mới")
         with st.form("add_menu_form"):
             name = st.text_input("Tên món")
-            price = st.number_input("Giá (VNĐ)", min_value=0, step=1000, value=0)
-            if price > 0:
-                st.caption(f"👉 Giá đã chọn: **{price:,.0f} đ**".replace(",", "."))
+            #price = st.number_input("Giá (VNĐ)", min_value=0, step=1000, value=0)
+      
+            #if price > 0:
+                #st.caption(f"👉 Giá đã chọn: **{price:,.0f} đ**".replace(",", "."))
+            price_text = st.text_input("Giá (VNĐ)", value="0")
+            try:
+                price = int(price_text.replace(".", "").replace(",", "")) * 1000
+                if price > 0:
+                    st.caption(f"👉 Giá đã chọn: **{price:,.0f} đ**".replace(",", "."))
+            except ValueError:
+                price = 0
+                st.error("Vui lòng nhập số hợp lệ.")
+           
             category = st.selectbox("Danh mục",options=["Cà phê", "Trà trái cây","Nước ép", "Soda", "Đá xay","Bánh ngọt", "Đồ ăn nhẹ"],)
             uploaded_image = st.file_uploader("Chọn ảnh món từ máy", type=sorted(ALLOWED_IMAGE_TYPES))
             description = st.text_input("Mô tả")

@@ -266,10 +266,10 @@ def show_invoice(order):
         # thật của quán.
         # ----------------------------------------------------
 
-        bank_code = "VCB"
+        bank_code = "VTB"
 
         account_number = (
-            "0123456789"
+            "100882595332"
         )
 
         order_id = order.get(

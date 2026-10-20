@@ -58,27 +58,6 @@ git commit -m "Mo ta ngan gon thay doi"
 git push origin main
 ```
 
-
-## Cấu trúc dự án
-
-```text
-quan-nuoc-order/
-|-- .streamlit/
-|   `-- config.toml
-|-- assets/
-|   `-- images/
-|-- data/
-|   `-- menu_mac_dinh.json
-|-- views/
-|   |-- admin.py
-|   `-- customer.py
-|-- app.py
-|-- database.py
-|-- requirements.txt
-|-- README.md
-`-- .gitignore
-```
-
 Sau lần chạy đầu tiên, chương trình có thể tạo `orders.db` để lưu dữ liệu SQLite. Thư mục `.venv/` là môi trường Python riêng và không phải mã nguồn.
 
 ### Lưu dữ liệu ổn định trên Streamlit Cloud
@@ -93,20 +72,23 @@ SUPABASE_URL = "https://txxvrqfrvejckqgzgxje.supabase.co"
 SUPABASE_KEY = "sb_publishable_wK7vyRRV-kCICc5YRS95TA_PTmsm6Rd"
 ```
 
-3. Redeploy app. Khi hai Secret này tồn tại, ứng dụng dùng Supabase cho menu, đơn hàng, trạng thái và mã giảm giá; khi chạy local không có Secret, ứng dụng tự dùng `orders.db`.
+3. Redeploy app. Khi hai Secret này tồn tại, ứng dụng dùng Supabase cho menu, đơn hàng, trạng thái, mã giảm giá và combo; khi chạy local không có Secret, ứng dụng tự dùng `orders.db`.
 
-Chính sách trong file SQL cho phép ứng dụng demo đọc/ghi bằng anon key. Với website thật, nên thêm đăng nhập và thu hẹp Row Level Security trước khi đưa vào sử dụng rộng rãi.
 
 ## Tác dụng của các file và thư mục
 
 - `app.py`: điểm khởi động ứng dụng, điều hướng giữa giao diện khách hàng và chủ quán.
-- `database.py`: khởi tạo cơ sở dữ liệu SQLite, nạp menu ban đầu và cung cấp thao tác với món, khách hàng và đơn hàng.
+- `database.py`: khởi tạo cơ sở dữ liệu SQLite, nạp menu ban đầu và cung cấp thao tác với món, khách hàng, đơn hàng, mã giảm giá và combo.
 - `views/customer.py`: hiển thị menu, giỏ hàng, thông tin khách, thanh toán VietQR và tạo đơn hàng.
 - `views/admin.py`: đăng nhập quản trị, thêm/sửa/xóa món, tra cứu đơn và cập nhật trạng thái đơn.
 - `data/menu_mac_dinh.json`: dữ liệu menu ban đầu. Mỗi món gồm `id`, `name`, `category`, `description`, `price`, `image` và `emoji`.
+- `data/menu-notes.md`: hướng dẫn cấu trúc, chỉnh sửa và nạp dữ liệu từ `menu_mac_dinh.json`.
 - `assets/images/`: ảnh món uống và logo. Khi thêm món từ giao diện quản trị, chủ quán có thể chọn ảnh trực tiếp từ máy; ảnh được lưu tự động vào thư mục này.
 - `.streamlit/config.toml`: cấu hình màu sắc, font chữ và giao diện Streamlit.
+- `.devcontainer/devcontainer.json`: cấu hình môi trường phát triển Dev Container/Codespaces, cài dependencies và chạy ứng dụng Streamlit.
 - `requirements.txt`: danh sách thư viện Python cần cài cho dự án.
+- `supabase_schema.sql`: lệnh SQL tạo các bảng Supabase (`menu`, `discounts`, `customers`, `orders`, `combos`), bật Row Level Security và cấu hình policy truy cập.
+- `resize_images.py`: script thu nhỏ và tối ưu các ảnh PNG trong `assets/images/` về chiều rộng tối đa 500 pixel.
 - `.gitignore`: danh sách file không đưa lên Git, như `.venv/`, cache và dữ liệu cục bộ.
 - `README.md`: tài liệu cài đặt, chạy và giới thiệu dự án.
 - `orders.db`: cơ sở dữ liệu được tạo tự động khi chạy ứng dụng; không cần tạo thủ công.
@@ -114,4 +96,4 @@ Chính sách trong file SQL cho phép ứng dụng demo đọc/ghi bằng anon k
 # Lưu ý
 Để thêm món mặc định, chỉnh `data/menu_mac_dinh.json` hoặc sử dụng giao diện quản trị. Khi thêm món trên web, chọn ảnh JPG, JPEG, PNG hoặc WEBP từ máy; ứng dụng sẽ tự lưu ảnh vào `assets/images/`. Có thể chỉnh màu và giao diện trong `.streamlit/config.toml`.
 
-Khu vực **Chủ quán** hiện dùng mật khẩu demo `1`; cần đổi mật khẩu trong `views/admin.py` trước khi triển khai thật. Thông tin VietQR mặc định cũng chỉ dùng cho mục đích demo.
+Khu vực **Chủ quán** hiện dùng mật khẩu demo `1`; có thể đổi mật khẩu trong `views/admin.py` . Thông tin VietQR mặc định cũng chỉ dùng cho mục đích demo.
