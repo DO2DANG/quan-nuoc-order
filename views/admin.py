@@ -252,6 +252,9 @@ def format_price(price):
     return f"{price:,.0f}đ".replace(",", ".")
 
 
+
+
+
 def save_uploaded_image(uploaded_image):
     """Resize + nén ảnh ngay khi upload để menu tải nhanh hơn."""
     IMAGE_DIR.mkdir(parents=True, exist_ok=True)
@@ -271,7 +274,6 @@ def save_uploaded_image(uploaded_image):
 
         file_name = f"{uuid4().hex}.jpg"
         file_path = IMAGE_DIR / file_name
-
         # JPEG nhỏ hơn PNG/JPG gốc rất nhiều trong đa số trường hợp.
         image.save(
             file_path,
@@ -279,11 +281,9 @@ def save_uploaded_image(uploaded_image):
             quality=82,
             optimize=True
         )
-
         return f"assets/images/{file_name}"
     except Exception as error:
         raise ValueError(f"Không thể xử lý ảnh: {error}")
-
 
 def render():
     menu_tab, orders_tab, combo_tab , traffic_tab, discount_tab, dashboard_tab = st.tabs(["Quản lý menu", "Lịch sử đơn hàng", "Phân tích combo","Khung giờ cao điểm","Mã giảm giá","Doanh thu"])
@@ -291,18 +291,12 @@ def render():
         st.markdown("### Thêm món mới")
         with st.form("add_menu_form"):
             name = st.text_input("Tên món")
-            #price = st.number_input("Giá (VNĐ)", min_value=0, step=1000, value=0)
-      
-            #if price > 0:
-                #st.caption(f"👉 Giá đã chọn: **{price:,.0f} đ**".replace(",", "."))
-            price_text = st.text_input("Giá (VNĐ)", value="0")
-            try:
-                price = int(price_text.replace(".", "").replace(",", "")) * 1000
-                if price > 0:
-                    st.caption(f"👉 Giá đã chọn: **{price:,.0f} đ**".replace(",", "."))
-            except ValueError:
-                price = 0
-                st.error("Vui lòng nhập số hợp lệ.")
+            # xử lý chuẩn hoá VNĐ bằng nhân thêm 1000 
+            price = (st.number_input("Giá (VNĐ)", min_value= 0, step= 1000, value= 0)) * 1000       
+  
+            if price > 0:
+                st.caption(f"👉 Giá đã chọn: **{price:,.0f} đ**".replace(",", "."))
+ 
            
             category = st.selectbox("Danh mục",options=["Cà phê", "Trà trái cây","Nước ép", "Soda", "Đá xay","Bánh ngọt", "Đồ ăn nhẹ"],)
             uploaded_image = st.file_uploader("Chọn ảnh món từ máy", type=sorted(ALLOWED_IMAGE_TYPES))
