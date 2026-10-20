@@ -212,7 +212,7 @@ def render_combo_suggestions():
             min_value=0,
             step=1000,
             key="combo_price_val"
-        )
+        ) * 1000
 
         if st.button("🎁 Tạo combo", type="primary"):
             if len(set(mon_da_chon)) < so_mon:
